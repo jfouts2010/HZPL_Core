@@ -18,6 +18,7 @@ namespace Models.Gameplay.Campaign
     [Serializable]
     public class AirWing
     {
+        public Guid Id = Guid.NewGuid();
         public string Name;
         public AirWingType WingType;
         public Guid CountryId;

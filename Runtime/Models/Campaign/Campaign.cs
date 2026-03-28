@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 using Monobehaviours.Singletons;
 using Newtonsoft.Json;
 using ScriptableObjects.Gameplay.Units;
@@ -21,7 +22,20 @@ namespace Models.Gameplay.Campaign
         public List<DivisionTemplate> divisionTemplates = new List<DivisionTemplate>();
         public List<Area> areas;
         public List<UnitSpawn> unitSpawnPoints;
-        public List<AirWing> airWingSpawns { get; set; } = new List<AirWing>();
+        public CampaignAirData Air = new CampaignAirData();
+        public List<AirWing> airWingSpawns
+        {
+            get
+            {
+                EnsureAirDataInitialized();
+                return Air.Wings;
+            }
+            set
+            {
+                EnsureAirDataInitialized();
+                Air.Wings = value ?? new List<AirWing>();
+            }
+        }
         public float TileSeparationKM = 50;
         public float TurnsPerDay = 4;
         public Vector2Int BottomLeftCorner;
@@ -66,6 +80,19 @@ namespace Models.Gameplay.Campaign
 
             areas = new List<Area>();
             unitSpawnPoints = new List<UnitSpawn>();
+            EnsureAirDataInitialized();
+        }
+
+        public void EnsureAirDataInitialized()
+        {
+            Air ??= new CampaignAirData();
+            Air.Wings ??= new List<AirWing>();
+            Air.StaticAirDefenseSites ??= new List<StaticAirDefenseSiteDefinition>();
+        }
+
+        public bool ShouldSerializeairWingSpawns()
+        {
+            return false;
         }
 
         public Color GetAreaColor(Guid id)
@@ -79,6 +106,18 @@ namespace Models.Gameplay.Campaign
             {
                 return Color.red;
             }
+        }
+
+        [OnDeserialized]
+        private void OnDeserialized(StreamingContext context)
+        {
+            EnsureAirDataInitialized();
+            tileData ??= new Dictionary<Vector3Int, HZPLTileData>();
+            Countries ??= new List<Guid>();
+            CountryAlliance ??= new Dictionary<Guid, Alliance>();
+            divisionTemplates ??= new List<DivisionTemplate>();
+            areas ??= new List<Area>();
+            unitSpawnPoints ??= new List<UnitSpawn>();
         }
     }
 
