@@ -22,18 +22,19 @@ namespace Models.Gameplay.Campaign
         public List<DivisionTemplate> divisionTemplates = new List<DivisionTemplate>();
         public List<Area> areas;
         public List<UnitSpawn> unitSpawnPoints;
-        public CampaignAirData Air = new CampaignAirData();
+        public List<AirWing> Wings = new List<AirWing>();
+        public List<StaticAirDefenseSiteDefinition> StaticAirDefenseSites = new List<StaticAirDefenseSiteDefinition>();
         public List<AirWing> airWingSpawns
         {
             get
             {
                 EnsureAirDataInitialized();
-                return Air.Wings;
+                return Wings;
             }
             set
             {
                 EnsureAirDataInitialized();
-                Air.Wings = value ?? new List<AirWing>();
+                Wings = value ?? new List<AirWing>();
             }
         }
         public float TileSeparationKM = 50;
@@ -85,9 +86,8 @@ namespace Models.Gameplay.Campaign
 
         public void EnsureAirDataInitialized()
         {
-            Air ??= new CampaignAirData();
-            Air.Wings ??= new List<AirWing>();
-            Air.StaticAirDefenseSites ??= new List<StaticAirDefenseSiteDefinition>();
+            Wings ??= new List<AirWing>();
+            StaticAirDefenseSites ??= new List<StaticAirDefenseSiteDefinition>();
         }
 
         public bool ShouldSerializeairWingSpawns()
