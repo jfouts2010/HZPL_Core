@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Models.Gameplay.Campaign;
 using Monobehaviours.Singletons;
 using ScriptableObjects.Gameplay.Units;
 using UnityEngine;
@@ -25,6 +26,7 @@ namespace Services
                     null,
                     Array.Empty<ResolvedBattalionComposition>(),
                     default,
+                    DivisionTemplateMobileAirDefenseStats.Empty,
                     null,
                     Array.Empty<Guid>());
             }
@@ -60,6 +62,7 @@ namespace Services
                 template,
                 resolvedComposition,
                 BuildStats(resolvedComposition),
+                BuildMobileAirDefenseStats(resolvedComposition),
                 ResolveDivisionIcon(resolvedComposition),
                 missingBattalionIds);
         }
@@ -70,6 +73,16 @@ namespace Services
         public static DivisionTemplateStats ResolveStats(DivisionTemplate template, ModuleData moduleData = null)
         {
             return Resolve(template, moduleData).Stats;
+        }
+
+        /// <summary>
+        /// Convenience path when callers only need the aggregated mobile SAM capability derived from battalion composition.
+        /// </summary>
+        public static DivisionTemplateMobileAirDefenseStats ResolveMobileAirDefenseStats(
+            DivisionTemplate template,
+            ModuleData moduleData = null)
+        {
+            return Resolve(template, moduleData).MobileAirDefense;
         }
 
         /// <summary>
@@ -103,6 +116,70 @@ namespace Services
                     .DefaultIfEmpty((int)MovementType.NoMove)
                     .Max()
             };
+        }
+
+        /// <summary>
+        /// Aggregates battalion-level mobile SAM capability into a division-level derived view for editor/runtime consumers.
+        /// </summary>
+        private static DivisionTemplateMobileAirDefenseStats BuildMobileAirDefenseStats(
+            IReadOnlyList<ResolvedBattalionComposition> composition)
+        {
+            if (composition == null || composition.Count == 0)
+                return DivisionTemplateMobileAirDefenseStats.Empty;
+
+            int contributingBattalionCount = 0;
+            var networkRoles = AirDefenseNetworkRole.None;
+            float totalNetworkQualityContribution = 0f;
+            float maxNetworkParticipationRangeKm = 0f;
+            float bestDetectionRangeKm = 0f;
+            float bestEngagementRangeKm = 0f;
+            float bestRadarQuality = 0f;
+            int totalLauncherCount = 0;
+            int totalChannelCount = 0;
+            var missileInventoryByWeaponId = new Dictionary<Guid, int>();
+
+            foreach (var part in composition)
+            {
+                var capability = part.Battalion?.SelfPropelledSamCapability;
+                if (capability == null || part.Count <= 0)
+                    continue;
+
+                contributingBattalionCount += part.Count;
+                networkRoles |= capability.NetworkRole;
+                totalNetworkQualityContribution += capability.NetworkQualityContribution * part.Count;
+                maxNetworkParticipationRangeKm = Mathf.Max(maxNetworkParticipationRangeKm,
+                    capability.NetworkParticipationRangeKm);
+                bestDetectionRangeKm = Mathf.Max(bestDetectionRangeKm, capability.DetectionRangeKm);
+                bestEngagementRangeKm = Mathf.Max(bestEngagementRangeKm, capability.EngagementRangeKm);
+                bestRadarQuality = Mathf.Max(bestRadarQuality, capability.RadarQuality);
+                totalLauncherCount += capability.BaseLaunchers * part.Count;
+                totalChannelCount += capability.BaseChannels * part.Count;
+
+                foreach (var missileEntry in capability.MissileInventoryByWeaponId ??
+                                             Enumerable.Empty<KeyValuePair<Guid, int>>())
+                {
+                    if (missileEntry.Value == 0)
+                        continue;
+
+                    missileInventoryByWeaponId.TryGetValue(missileEntry.Key, out var currentCount);
+                    missileInventoryByWeaponId[missileEntry.Key] = currentCount + missileEntry.Value * part.Count;
+                }
+            }
+
+            if (contributingBattalionCount <= 0)
+                return DivisionTemplateMobileAirDefenseStats.Empty;
+
+            return new DivisionTemplateMobileAirDefenseStats(
+                contributingBattalionCount,
+                networkRoles,
+                totalNetworkQualityContribution,
+                maxNetworkParticipationRangeKm,
+                bestDetectionRangeKm,
+                bestEngagementRangeKm,
+                bestRadarQuality,
+                totalLauncherCount,
+                totalChannelCount,
+                missileInventoryByWeaponId);
         }
 
         /// <summary>

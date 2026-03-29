@@ -14,21 +14,25 @@ namespace ScriptableObjects.Gameplay.Units
         public DivisionTemplate Template { get; }
         public IReadOnlyList<ResolvedBattalionComposition> Composition { get; }
         public DivisionTemplateStats Stats { get; }
+        public DivisionTemplateMobileAirDefenseStats MobileAirDefense { get; }
         public Sprite DivisionIcon { get; }
         public IReadOnlyList<Guid> MissingBattalionIDs { get; }
         public bool HasMissingBattalions => MissingBattalionIDs.Count > 0;
+        public bool HasMobileAirDefense => MobileAirDefense.HasCapability;
         public int TotalBattalionCount => Composition.Sum(part => part.Count);
 
         public ResolvedDivisionTemplate(
             DivisionTemplate template,
             IReadOnlyList<ResolvedBattalionComposition> composition,
             DivisionTemplateStats stats,
+            DivisionTemplateMobileAirDefenseStats mobileAirDefense,
             Sprite divisionIcon,
             IReadOnlyList<Guid> missingBattalionIDs)
         {
             Template = template;
             Composition = composition ?? Array.Empty<ResolvedBattalionComposition>();
             Stats = stats;
+            MobileAirDefense = mobileAirDefense ?? DivisionTemplateMobileAirDefenseStats.Empty;
             DivisionIcon = divisionIcon;
             MissingBattalionIDs = missingBattalionIDs ?? Array.Empty<Guid>();
         }

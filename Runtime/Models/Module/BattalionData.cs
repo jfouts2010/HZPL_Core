@@ -37,10 +37,15 @@ public class BattalionData
     public float SupplyConsumption { get; private set; }
     public float FuelConsumption { get; private set; }
     public MovementType MovementType { get; private set; }
+    public SelfPropelledSamCapabilityData SelfPropelledSamCapability { get; private set; }
+
+    [JsonIgnore]
+    public bool HasSelfPropelledSamCapability => SelfPropelledSamCapability != null;
 
     public BattalionData(Guid id, string battalionName, string battalionSpritePath, int strength, int organization,
         float recovery, float softAttack, float hardAttack, int defense, int toughness, float softness, float speed,
-        int combatWidth, float supplyConsumption, float fuelConsumption, MovementType movementType = MovementType.Foot)
+        int combatWidth, float supplyConsumption, float fuelConsumption, MovementType movementType = MovementType.Foot,
+        SelfPropelledSamCapabilityData selfPropelledSamCapability = null)
     {
         if (movementType != MovementType.Foot &&
             movementType != MovementType.Wheeled &&
@@ -67,5 +72,6 @@ public class BattalionData
         SupplyConsumption = supplyConsumption;
         FuelConsumption = fuelConsumption;
         MovementType = movementType;
+        SelfPropelledSamCapability = selfPropelledSamCapability;
     }
 }
