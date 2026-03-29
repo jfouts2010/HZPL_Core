@@ -23,6 +23,7 @@ namespace Models.Gameplay.Campaign
         public List<Area> areas;
         public List<UnitSpawn> unitSpawnPoints;
         public List<AirWing> Wings = new List<AirWing>();
+        public List<AirportDefinition> Airports = new List<AirportDefinition>();
         public List<StaticAirDefenseSiteDefinition> StaticAirDefenseSites = new List<StaticAirDefenseSiteDefinition>();
         public List<AirWing> airWingSpawns
         {
@@ -87,7 +88,9 @@ namespace Models.Gameplay.Campaign
         public void EnsureAirDataInitialized()
         {
             Wings ??= new List<AirWing>();
+            Airports ??= new List<AirportDefinition>();
             StaticAirDefenseSites ??= new List<StaticAirDefenseSiteDefinition>();
+            NormalizeAirportData();
         }
 
         public bool ShouldSerializeairWingSpawns()
@@ -118,6 +121,81 @@ namespace Models.Gameplay.Campaign
             divisionTemplates ??= new List<DivisionTemplate>();
             areas ??= new List<Area>();
             unitSpawnPoints ??= new List<UnitSpawn>();
+        }
+
+        private void NormalizeAirportData()
+        {
+            Airports.RemoveAll(airport => airport == null);
+
+            var airportsById = new Dictionary<Guid, AirportDefinition>();
+            var airportsByTile = new Dictionary<Vector3Int, AirportDefinition>();
+            foreach (var airport in Airports)
+            {
+                if (airport.Id == Guid.Empty)
+                    airport.Id = Guid.NewGuid();
+
+                airport.Level = Mathf.Clamp(airport.Level <= 0 ? 1 : airport.Level, 1, 10);
+                airport.Name = string.IsNullOrWhiteSpace(airport.Name)
+                    ? BuildDefaultAirportName(airport.Tile, string.Empty)
+                    : airport.Name.Trim();
+
+                if (!airportsById.ContainsKey(airport.Id))
+                    airportsById.Add(airport.Id, airport);
+
+                if (!airportsByTile.ContainsKey(airport.Tile))
+                    airportsByTile.Add(airport.Tile, airport);
+            }
+
+            if (tileData != null)
+            {
+                foreach (var kvp in tileData)
+                {
+                    var tile = kvp.Value;
+                    if (tile?.infrastructure == null)
+                        continue;
+
+                    var legacyAirfieldLevel = tile.infrastructure.airfieldLevel;
+                    if (legacyAirfieldLevel > 0 && !airportsByTile.ContainsKey(kvp.Key))
+                    {
+                        var airport = new AirportDefinition
+                        {
+                            Name = BuildDefaultAirportName(kvp.Key, tile.tileName),
+                            Tile = kvp.Key,
+                            OwnerAlliance = tile.controllingAlliance,
+                            Level = Mathf.Clamp(legacyAirfieldLevel, 1, 10)
+                        };
+
+                        Airports.Add(airport);
+                        airportsById[airport.Id] = airport;
+                        airportsByTile[airport.Tile] = airport;
+                    }
+
+                    tile.infrastructure.airfieldLevel = 0;
+                }
+            }
+
+            foreach (var wing in Wings.Where(wing => wing != null))
+            {
+                if (wing.HomeAirportId != Guid.Empty && airportsById.TryGetValue(wing.HomeAirportId, out var airport))
+                {
+                    wing.HomeAirfieldCell = airport.Tile;
+                    continue;
+                }
+
+                if (airportsByTile.TryGetValue(wing.HomeAirfieldCell, out airport))
+                {
+                    wing.HomeAirportId = airport.Id;
+                    wing.HomeAirfieldCell = airport.Tile;
+                }
+            }
+        }
+
+        private static string BuildDefaultAirportName(Vector3Int tile, string tileName)
+        {
+            if (!string.IsNullOrWhiteSpace(tileName))
+                return $"{tileName.Trim()} Airport";
+
+            return $"Airport {tile.x},{tile.y}";
         }
     }
 

@@ -45,6 +45,7 @@ public class BaseTilemapManager : MonoBehaviour
     public float overlayAlphaValue = 0.3f;
     private Dictionary<Vector3Int, HZPLTileData> TileData;
     private List<Area> Areas;
+    private HashSet<Vector3Int> AirportCells = new HashSet<Vector3Int>();
     public List<HZPLTerrain> terrainTypes;
 
     public RiverPolylineOverlay riverOverlay;
@@ -115,7 +116,7 @@ public class BaseTilemapManager : MonoBehaviour
                 break;
         }
 
-        airportTilemap.SetTile(cellPos, data.infrastructure.airfieldLevel > 0 ? airportTile : null);
+        airportTilemap.SetTile(cellPos, AirportCells.Contains(cellPos) ? airportTile : null);
 
         fortTilemap.SetTile(cellPos, data.infrastructure.fortificationLevel > 0 ? fortTile : null);
 
@@ -169,10 +170,14 @@ public class BaseTilemapManager : MonoBehaviour
     }
 
     public void SetCampaign(Dictionary<Vector3Int, HZPLTileData> tileData,
-        List<Area> areas)
+        List<Area> areas,
+        List<AirportDefinition> airports = null)
     {
         TileData = tileData;
         Areas = areas;
+        AirportCells = airports != null
+            ? new HashSet<Vector3Int>(airports.Where(airport => airport != null).Select(airport => airport.Tile))
+            : new HashSet<Vector3Int>();
         RefreshTilemaps();
     }
 

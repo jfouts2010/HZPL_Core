@@ -53,6 +53,7 @@ namespace Models.Gameplay.Campaign
         // Buildings (level 0 = not present, 1-10 = level)
         public int fortificationLevel = 0;
         public int portLevel = 0;
+        // Legacy tile-authored airfield data retained only so older campaign files can migrate to AirportDefinition.
         public int airfieldLevel = 0;
         
         // Resources (level 0 = not present, 1-10 = level)
@@ -76,7 +77,6 @@ namespace Models.Gameplay.Campaign
                    supplyLineLevel > 0 ||
                    fortificationLevel > 0 ||
                    portLevel > 0 ||
-                   airfieldLevel > 0 ||
                    oilLevel > 0 ||
                    electricityLevel > 0 ||
                    steelLevel > 0 ||
@@ -117,7 +117,7 @@ namespace Models.Gameplay.Campaign
             {
                 case BuildingType.Fortification: return fortificationLevel;
                 case BuildingType.Port: return portLevel;
-                case BuildingType.Airfield: return airfieldLevel;
+                case BuildingType.Airfield: return 0;
                 default: return 0;
             }
         }
@@ -133,7 +133,7 @@ namespace Models.Gameplay.Campaign
             {
                 case BuildingType.Fortification: fortificationLevel = level; break;
                 case BuildingType.Port: portLevel = level; break;
-                case BuildingType.Airfield: airfieldLevel = level; break;
+                case BuildingType.Airfield: airfieldLevel = 0; break;
             }
         }
         

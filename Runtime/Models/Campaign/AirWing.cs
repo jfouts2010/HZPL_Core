@@ -24,6 +24,7 @@ namespace Models.Gameplay.Campaign
         public Guid CountryId;
         public string PatchSpritePath;
         public List<AirSquadron> Squadrons = new List<AirSquadron>();
+        public Guid HomeAirportId;
         public Vector3Int HomeAirfieldCell;
         public AirWing() { }
         public AirWing(string name, AirWingType type, Guid countryID, Vector3Int cell)
@@ -31,6 +32,7 @@ namespace Models.Gameplay.Campaign
             Name = name;
             WingType = type;
             CountryId = countryID;
+            HomeAirportId = Guid.Empty;
             HomeAirfieldCell = cell;
             PatchSpritePath = string.Empty;
             Squadrons = new List<AirSquadron>();
