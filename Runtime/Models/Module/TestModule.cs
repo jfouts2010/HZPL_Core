@@ -10,7 +10,7 @@ namespace Models.Module
         {
             var countries = new List<CountryData>();
             var allBattalions = new List<BattalionData>();
-            var allAirDefenseSiteComponents = new List<StaticAirDefenseSiteComponentData>();
+            var allAirDefenseComponents = new List<AirDefenseComponentData>();
             allBattalions.Add(new BattalionData(Guid.Parse("6f3abcae-b45b-479a-ab95-98618c808d6b"),
                 "Infantry",
                 "usFlag",
@@ -31,7 +31,7 @@ namespace Models.Module
             countries.Add(USA);
             var USSR = new CountryData(Guid.Parse("6f350cae-b45b-479a-ab95-98618c808d6b"), "USSR", "ussrFlag", new List<Guid>() {Guid.Parse("6f3abcae-b45b-479a-ab95-98618c808d6b")}, Color.red);
             countries.Add(USSR);
-            return new ModuleData("TestModule", "Test Game", countries, allBattalions, allAirDefenseSiteComponents);
+            return new ModuleData("TestModule", "Test Game", countries, allBattalions, allAirDefenseComponents);
         }
     }
 }

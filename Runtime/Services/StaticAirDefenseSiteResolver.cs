@@ -43,9 +43,9 @@ namespace Services
             float networkParticipationRangeKm = 0f;
             int shooterChannels = 0;
 
-            var componentsById = moduleData?.AirDefenseSiteComponentsById;
+            var componentsById = moduleData?.AirDefenseComponentsById;
 
-            foreach (var entry in definition.Components ?? Enumerable.Empty<StaticAirDefenseSiteDefinition.ComponentComposition>())
+            foreach (var entry in definition.Components ?? Enumerable.Empty<AirDefenseComponentComposition>())
             {
                 if (entry == null || entry.Count <= 0)
                     continue;
@@ -67,7 +67,7 @@ namespace Services
                 if (component.RadarProfileId != Guid.Empty)
                     radarProfileIds.Add(component.RadarProfileId);
 
-                foreach (var missileEntry in component.InitialMissileInventory ?? Enumerable.Empty<KeyValuePair<Guid, int>>())
+                foreach (var missileEntry in component.MissileInventoryByWeaponId ?? Enumerable.Empty<KeyValuePair<Guid, int>>())
                 {
                     if (missileEntry.Value == 0)
                         continue;

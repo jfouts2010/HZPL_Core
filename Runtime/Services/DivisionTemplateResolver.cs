@@ -62,7 +62,7 @@ namespace Services
                 template,
                 resolvedComposition,
                 BuildStats(resolvedComposition),
-                BuildMobileAirDefenseStats(resolvedComposition),
+                BuildMobileAirDefenseStats(resolvedComposition, moduleData),
                 ResolveDivisionIcon(resolvedComposition),
                 missingBattalionIds);
         }
@@ -122,11 +122,13 @@ namespace Services
         /// Aggregates battalion-level mobile SAM capability into a division-level derived view for editor/runtime consumers.
         /// </summary>
         private static DivisionTemplateMobileAirDefenseStats BuildMobileAirDefenseStats(
-            IReadOnlyList<ResolvedBattalionComposition> composition)
+            IReadOnlyList<ResolvedBattalionComposition> composition,
+            ModuleData moduleData)
         {
             if (composition == null || composition.Count == 0)
                 return DivisionTemplateMobileAirDefenseStats.Empty;
 
+            var componentsById = moduleData?.AirDefenseComponentsById;
             int contributingBattalionCount = 0;
             var networkRoles = AirDefenseNetworkRole.None;
             float totalNetworkQualityContribution = 0f;
@@ -137,33 +139,58 @@ namespace Services
             int totalLauncherCount = 0;
             int totalChannelCount = 0;
             var missileInventoryByWeaponId = new Dictionary<Guid, int>();
+            var missingComponentIds = new HashSet<Guid>();
 
             foreach (var part in composition)
             {
-                var capability = part.Battalion?.SelfPropelledSamCapability;
-                if (capability == null || part.Count <= 0)
+                if (part.Battalion?.AirDefenseComponents == null || part.Count <= 0)
                     continue;
 
-                contributingBattalionCount += part.Count;
-                networkRoles |= capability.NetworkRole;
-                totalNetworkQualityContribution += capability.NetworkQualityContribution * part.Count;
-                maxNetworkParticipationRangeKm = Mathf.Max(maxNetworkParticipationRangeKm,
-                    capability.NetworkParticipationRangeKm);
-                bestDetectionRangeKm = Mathf.Max(bestDetectionRangeKm, capability.DetectionRangeKm);
-                bestEngagementRangeKm = Mathf.Max(bestEngagementRangeKm, capability.EngagementRangeKm);
-                bestRadarQuality = Mathf.Max(bestRadarQuality, capability.RadarQuality);
-                totalLauncherCount += capability.BaseLaunchers * part.Count;
-                totalChannelCount += capability.BaseChannels * part.Count;
-
-                foreach (var missileEntry in capability.MissileInventoryByWeaponId ??
-                                             Enumerable.Empty<KeyValuePair<Guid, int>>())
+                bool battalionContributes = false;
+                foreach (var componentEntry in part.Battalion.AirDefenseComponents)
                 {
-                    if (missileEntry.Value == 0)
+                    if (componentEntry == null || componentEntry.Count <= 0)
                         continue;
 
-                    missileInventoryByWeaponId.TryGetValue(missileEntry.Key, out var currentCount);
-                    missileInventoryByWeaponId[missileEntry.Key] = currentCount + missileEntry.Value * part.Count;
+                    if (componentsById == null ||
+                        !componentsById.TryGetValue(componentEntry.ComponentId, out var component) ||
+                        component == null)
+                    {
+                        missingComponentIds.Add(componentEntry.ComponentId);
+                        continue;
+                    }
+
+                    battalionContributes = true;
+                    int resolvedCount = componentEntry.Count * part.Count;
+                    networkRoles |= component.NetworkRole;
+                    totalNetworkQualityContribution += component.NetworkQualityContribution * resolvedCount;
+                    maxNetworkParticipationRangeKm = Mathf.Max(maxNetworkParticipationRangeKm,
+                        component.NetworkParticipationRangeKm);
+                    bestDetectionRangeKm = Mathf.Max(bestDetectionRangeKm, component.DetectionRangeKm);
+                    bestEngagementRangeKm = Mathf.Max(bestEngagementRangeKm, component.EngagementRangeKm);
+                    bestRadarQuality = Mathf.Max(bestRadarQuality, component.RadarQuality);
+                    totalLauncherCount += component.LauncherCount * resolvedCount;
+                    totalChannelCount += component.ShooterChannels * resolvedCount;
+
+                    foreach (var missileEntry in component.MissileInventoryByWeaponId ??
+                                                 Enumerable.Empty<KeyValuePair<Guid, int>>())
+                    {
+                        if (missileEntry.Value == 0)
+                            continue;
+
+                        missileInventoryByWeaponId.TryGetValue(missileEntry.Key, out var currentCount);
+                        missileInventoryByWeaponId[missileEntry.Key] = currentCount + missileEntry.Value * resolvedCount;
+                    }
                 }
+
+                if (battalionContributes)
+                    contributingBattalionCount += part.Count;
+            }
+
+            if (missingComponentIds.Count > 0)
+            {
+                Debug.LogWarning(
+                    $"Division template mobile air defense has unresolved component references: {string.Join(", ", missingComponentIds)}");
             }
 
             if (contributingBattalionCount <= 0)

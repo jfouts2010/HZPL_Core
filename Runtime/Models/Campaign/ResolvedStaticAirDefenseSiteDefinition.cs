@@ -5,10 +5,10 @@ namespace Models.Gameplay.Campaign
 {
     public sealed class ResolvedStaticAirDefenseSiteComponentComposition
     {
-        public StaticAirDefenseSiteComponentData Component { get; }
+        public AirDefenseComponentData Component { get; }
         public int Count { get; }
 
-        public ResolvedStaticAirDefenseSiteComponentComposition(StaticAirDefenseSiteComponentData component, int count)
+        public ResolvedStaticAirDefenseSiteComponentComposition(AirDefenseComponentData component, int count)
         {
             Component = component;
             Count = count;

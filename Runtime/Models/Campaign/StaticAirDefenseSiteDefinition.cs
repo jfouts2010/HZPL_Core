@@ -16,31 +16,31 @@ namespace Models.Gameplay.Campaign
     }
 
     [Serializable]
-    public sealed class StaticAirDefenseSiteDefinition
+    public class AirDefenseComponentComposition
     {
-        [Serializable]
-        public sealed class ComponentComposition
+        public Guid ComponentId;
+        public int Count = 1;
+
+        public AirDefenseComponentComposition()
         {
-            public Guid ComponentId;
-            public int Count = 1;
-
-            public ComponentComposition()
-            {
-            }
-
-            public ComponentComposition(Guid componentId, int count)
-            {
-                ComponentId = componentId;
-                Count = count;
-            }
         }
 
+        public AirDefenseComponentComposition(Guid componentId, int count)
+        {
+            ComponentId = componentId;
+            Count = count;
+        }
+    }
+
+    [Serializable]
+    public sealed class StaticAirDefenseSiteDefinition
+    {
         public Guid Id = Guid.NewGuid();
         public string Name;
         public Vector3Int Tile;
         public Alliance OwnerAlliance;
         public bool IsKeyIadsNode;
-        public List<ComponentComposition> Components = new List<ComponentComposition>();
+        public List<AirDefenseComponentComposition> Components = new List<AirDefenseComponentComposition>();
         public int TotalComponentCount => Components?.Sum(component => Math.Max(0, component?.Count ?? 0)) ?? 0;
     }
 }
