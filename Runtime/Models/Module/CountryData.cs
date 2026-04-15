@@ -29,6 +29,7 @@ public class CountryData
         this.CountryName = countryName;
         this.FlagPath = flagSpritePath;
         this.AllowedBattalions = allowedBattalions;
+        this.AllowedAircraft = new List<AircraftData>();
         this.CountryColor = countryColor;
         FlagSprite = Resources.Load<Sprite>(FlagPath);
     }

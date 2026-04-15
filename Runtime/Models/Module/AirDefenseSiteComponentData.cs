@@ -4,16 +4,7 @@ using Models.Gameplay.Campaign;
 using Newtonsoft.Json;
 using UnityEngine;
 
-public enum AirDefenseComponentType
-{
-    CommandPost,
-    EarlyWarningRadar,
-    FireControlRadar,
-    SurfaceToAirMissileLauncher,
-    PassiveSensor,
-    PointDefenseGun,
-    SupportVehicle
-}
+
 
 [Serializable]
 public class AirDefenseComponentData
@@ -71,4 +62,14 @@ public class AirDefenseComponentData
             ? new Dictionary<Guid, int>(missileInventoryByWeaponId)
             : new Dictionary<Guid, int>();
     }
+}
+public enum AirDefenseComponentType
+{
+    CommandPost,
+    EarlyWarningRadar,
+    FireControlRadar,
+    SurfaceToAirMissileLauncher,
+    PassiveSensor,
+    PointDefenseGun,
+    SupportVehicle
 }
