@@ -11,7 +11,7 @@ namespace Models.Module
             var countries = new List<CountryData>();
             var allBattalions = new List<BattalionData>();
             var allAircraft = new List<AircraftData>();
-            var allAirDefenseComponents = new List<AirDefenseComponentData>();
+            var allAirDefenseComponents = new List<AirDefenseComponentDefinition>();
             allBattalions.Add(new BattalionData(Guid.Parse("6f3abcae-b45b-479a-ab95-98618c808d6b"),
                 "Infantry",
                 "usFlag",

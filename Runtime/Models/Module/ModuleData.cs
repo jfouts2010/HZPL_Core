@@ -10,11 +10,11 @@ public class ModuleData
     public List<CountryData> ModuleCountries { get; private set; }
     public List<BattalionData> ModuleBattalions { get; private set; }
     public List<AircraftData> ModuleAircraft { get; private set; }
-    public List<AirDefenseComponentData> ModuleAirDefenseComponents { get; private set; }
+    public List<AirDefenseComponentDefinition> ModuleAirDefenseComponents { get; private set; }
     public List<WeaponProfileData> ModuleWeaponProfiles { get; private set; }
     private Dictionary<Guid, BattalionData> _battalionsById;
     private Dictionary<Guid, AircraftData> _aircraftById;
-    private Dictionary<Guid, AirDefenseComponentData> _airDefenseComponentsById;
+    private Dictionary<Guid, AirDefenseComponentDefinition> _airDefenseComponentsById;
     private Dictionary<Guid, WeaponProfileData> _weaponProfilesById;
 
     // Fast battalion lookup used by template resolution so IDs do not require repeated list scans.
@@ -28,9 +28,10 @@ public class ModuleData
             .Where(aircraft => aircraft != null && aircraft.ID != Guid.Empty)
             .ToDictionary(aircraft => aircraft.ID, aircraft => aircraft);
 
-    public IReadOnlyDictionary<Guid, AirDefenseComponentData> AirDefenseComponentsById =>
+    public IReadOnlyDictionary<Guid, AirDefenseComponentDefinition> AirDefenseComponentsById =>
         _airDefenseComponentsById ??=
-            (ModuleAirDefenseComponents ??= new List<AirDefenseComponentData>())
+            (ModuleAirDefenseComponents ??= new List<AirDefenseComponentDefinition>())
+            .Where(component => component != null && component.ID != Guid.Empty)
             .ToDictionary(component => component.ID, component => component);
 
     public IReadOnlyDictionary<Guid, WeaponProfileData> WeaponProfilesById =>
@@ -45,7 +46,7 @@ public class ModuleData
         List<CountryData> moduleCountries,
         List<BattalionData> moduleBattalions,
         List<AircraftData> moduleAircraft = null,
-        List<AirDefenseComponentData> moduleAirDefenseComponents = null,
+        List<AirDefenseComponentDefinition> moduleAirDefenseComponents = null,
         List<WeaponProfileData> moduleWeaponProfiles = null)
     {
         Name = name;
@@ -53,7 +54,7 @@ public class ModuleData
         ModuleCountries = moduleCountries ?? new List<CountryData>();
         ModuleBattalions = moduleBattalions ?? new List<BattalionData>();
         ModuleAircraft = moduleAircraft ?? new List<AircraftData>();
-        ModuleAirDefenseComponents = moduleAirDefenseComponents ?? new List<AirDefenseComponentData>();
+        ModuleAirDefenseComponents = moduleAirDefenseComponents ?? new List<AirDefenseComponentDefinition>();
         ModuleWeaponProfiles = moduleWeaponProfiles ?? new List<WeaponProfileData>();
     }
 }

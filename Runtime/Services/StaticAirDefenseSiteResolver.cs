@@ -18,34 +18,53 @@ namespace Services
             ModuleData moduleData = null)
         {
             if (definition == null)
-            {
                 return new ResolvedStaticAirDefenseSiteDefinition(
                     null,
-                    Array.Empty<ResolvedStaticAirDefenseSiteComponentComposition>(),
-                    AirDefenseNetworkRole.None,
-                    0f,
-                    0f,
-                    0,
-                    new Dictionary<Guid, int>(),
-                    Array.Empty<Guid>(),
-                    Array.Empty<Guid>());
-            }
+                    AirDefenseAssemblyResolver.Resolve(Array.Empty<AirDefenseComponentComposition>(), moduleData));
 
+            return new ResolvedStaticAirDefenseSiteDefinition(
+                definition,
+                AirDefenseAssemblyResolver.Resolve(definition.Components, moduleData, definition.Name));
+        }
+    }
+
+    public static class AirDefenseAssemblyResolver
+    {
+        public static ResolvedAirDefenseAssembly Resolve(
+            IEnumerable<AirDefenseComponentComposition> components,
+            ModuleData moduleData = null,
+            string debugOwnerName = null)
+        {
             moduleData ??= ModuleSingleton.Instance?.ModuleData;
 
-            var resolvedComponents = new List<ResolvedStaticAirDefenseSiteComponentComposition>();
+            var resolvedComponents = new List<ResolvedAirDefenseComponentComposition>();
             var missingComponentIds = new List<Guid>();
             var missileInventory = new Dictionary<Guid, int>();
             var radarProfileIds = new HashSet<Guid>();
 
             var roles = AirDefenseNetworkRole.None;
-            float baseNetworkQuality = 0f;
+            bool hasSearch = false;
+            bool hasCommandNode = false;
+            bool hasPassiveDetection = false;
+            bool hasFireControl = false;
+            bool hasLaunchers = false;
+            bool anyLauncherRequiresFireControl = false;
+
+            float networkQuality = 0f;
             float networkParticipationRangeKm = 0f;
-            int shooterChannels = 0;
+            float bestDetectionRangeKm = 0f;
+            float bestEngagementRangeKm = 0f;
+            float radarQuality = 0f;
+            float emissionsStrength = 0f;
+            int trackCapacity = 0;
+            int fireControlChannels = 0;
+            int organicLauncherChannels = 0;
+            int gunGuidanceChannels = 0;
+            int launcherCount = 0;
+            int launchesPerSlice = 0;
 
             var componentsById = moduleData?.AirDefenseComponentsById;
-
-            foreach (var entry in definition.Components ?? Enumerable.Empty<AirDefenseComponentComposition>())
+            foreach (var entry in components ?? Enumerable.Empty<AirDefenseComponentComposition>())
             {
                 if (entry == null || entry.Count <= 0)
                     continue;
@@ -58,38 +77,103 @@ namespace Services
                     continue;
                 }
 
-                resolvedComponents.Add(new ResolvedStaticAirDefenseSiteComponentComposition(component, entry.Count));
-                roles |= component.NetworkRole;
-                baseNetworkQuality += component.NetworkQualityContribution * entry.Count;
-                networkParticipationRangeKm += component.NetworkParticipationRangeKm * entry.Count;
-                shooterChannels += component.ShooterChannels * entry.Count;
+                component.EnsureInitialized();
+                resolvedComponents.Add(new ResolvedAirDefenseComponentComposition(component, entry.Count));
+                roles |= component.NetworkRoles;
 
-                if (component.RadarProfileId != Guid.Empty)
-                    radarProfileIds.Add(component.RadarProfileId);
+                networkQuality += component.BaseNetworkQualityContribution * entry.Count;
+                networkParticipationRangeKm = Mathf.Max(networkParticipationRangeKm, component.NetworkParticipationRangeKm);
+                bestDetectionRangeKm = Mathf.Max(bestDetectionRangeKm, component.BestDetectionRangeKm);
+                bestEngagementRangeKm = Mathf.Max(bestEngagementRangeKm, component.BestEngagementRangeKm);
+                radarQuality = Mathf.Max(radarQuality, component.BestRadarQuality);
+                emissionsStrength += component.EmissionsStrength * entry.Count;
 
-                foreach (var missileEntry in component.MissileInventoryByWeaponId ?? Enumerable.Empty<KeyValuePair<Guid, int>>())
+                if (component.SearchCapability != null)
                 {
-                    if (missileEntry.Value == 0)
-                        continue;
-
-                    missileInventory.TryGetValue(missileEntry.Key, out var currentCount);
-                    missileInventory[missileEntry.Key] = currentCount + missileEntry.Value * entry.Count;
+                    hasSearch = true;
+                    trackCapacity += component.SearchCapability.TrackCapacity * entry.Count;
                 }
+
+                if (component.FireControlCapability != null)
+                {
+                    hasSearch = true;
+                    hasFireControl = true;
+                    fireControlChannels += component.FireControlCapability.GuidanceChannels * entry.Count;
+                    trackCapacity += Mathf.Max(1, component.FireControlCapability.GuidanceChannels) * entry.Count;
+                }
+
+                if (component.PassiveSensorCapability != null)
+                {
+                    hasPassiveDetection = true;
+                    trackCapacity += component.PassiveSensorCapability.TrackCapacity * entry.Count;
+                }
+
+                if (component.CommandCapability != null)
+                    hasCommandNode = true;
+
+                if (component.LauncherCapability != null)
+                {
+                    hasLaunchers = true;
+                    launcherCount += component.LauncherCapability.LauncherCount * entry.Count;
+                    launchesPerSlice += component.LauncherCapability.LaunchesPerSlice * entry.Count;
+                    organicLauncherChannels += component.LauncherCapability.OrganicGuidanceChannels * entry.Count;
+                    anyLauncherRequiresFireControl |= component.LauncherCapability.RequiresFireControl;
+
+                    foreach (var missileEntry in component.LauncherCapability.MissileInventoryByWeaponId ??
+                                                 Enumerable.Empty<KeyValuePair<Guid, int>>())
+                    {
+                        if (missileEntry.Key == Guid.Empty || missileEntry.Value <= 0)
+                            continue;
+
+                        missileInventory.TryGetValue(missileEntry.Key, out var currentCount);
+                        missileInventory[missileEntry.Key] = currentCount + missileEntry.Value * entry.Count;
+                    }
+                }
+
+                if (component.GunCapability != null)
+                {
+                    gunGuidanceChannels += component.GunCapability.GuidanceChannels * entry.Count;
+                    launchesPerSlice += component.GunCapability.ShotsPerSlice * entry.Count;
+                }
+
+                foreach (var radarProfileId in component.RadarProfileIds)
+                    radarProfileIds.Add(radarProfileId);
             }
 
-            if (missingComponentIds.Count > 0)
+            if (missingComponentIds.Count > 0 && !string.IsNullOrWhiteSpace(debugOwnerName))
             {
                 Debug.LogWarning(
-                    $"Static air defense site '{definition.Name}' has unresolved component references: {string.Join(", ", missingComponentIds)}");
+                    $"Air defense assembly '{debugOwnerName}' has unresolved component references: {string.Join(", ", missingComponentIds)}");
             }
 
-            return new ResolvedStaticAirDefenseSiteDefinition(
-                definition,
+            bool canEngage = (hasLaunchers &&
+                              (!anyLauncherRequiresFireControl || hasFireControl || organicLauncherChannels > 0)) ||
+                             gunGuidanceChannels > 0;
+
+            int effectiveGuidanceChannels = canEngage
+                ? fireControlChannels + organicLauncherChannels + gunGuidanceChannels
+                : 0;
+
+            if (!canEngage)
+                bestEngagementRangeKm = 0f;
+
+            return new ResolvedAirDefenseAssembly(
                 resolvedComponents,
                 roles,
-                baseNetworkQuality,
+                hasSearch || hasPassiveDetection,
+                canEngage,
+                hasCommandNode,
+                hasPassiveDetection,
+                networkQuality,
                 networkParticipationRangeKm,
-                shooterChannels,
+                bestDetectionRangeKm,
+                bestEngagementRangeKm,
+                radarQuality,
+                emissionsStrength,
+                trackCapacity,
+                effectiveGuidanceChannels,
+                launcherCount,
+                canEngage ? launchesPerSlice : 0,
                 missileInventory,
                 radarProfileIds.ToList(),
                 missingComponentIds);

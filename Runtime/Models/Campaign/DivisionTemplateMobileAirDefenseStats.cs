@@ -10,50 +10,48 @@ namespace ScriptableObjects.Gameplay.Units
         public static DivisionTemplateMobileAirDefenseStats Empty { get; } =
             new DivisionTemplateMobileAirDefenseStats(
                 0,
-                AirDefenseNetworkRole.None,
-                0f,
-                0f,
-                0f,
-                0f,
-                0f,
-                0,
-                0,
-                new Dictionary<Guid, int>());
+                new ResolvedAirDefenseAssembly(
+                    Array.Empty<ResolvedAirDefenseComponentComposition>(),
+                    AirDefenseNetworkRole.None,
+                    false,
+                    false,
+                    false,
+                    false,
+                    0f,
+                    0f,
+                    0f,
+                    0f,
+                    0f,
+                    0f,
+                    0,
+                    0,
+                    0,
+                    0,
+                    new Dictionary<Guid, int>(),
+                    Array.Empty<Guid>(),
+                    Array.Empty<Guid>()));
 
         public int ContributingBattalionCount { get; }
-        public AirDefenseNetworkRole NetworkRoles { get; }
-        public float TotalNetworkQualityContribution { get; }
-        public float MaxNetworkParticipationRangeKm { get; }
-        public float BestDetectionRangeKm { get; }
-        public float BestEngagementRangeKm { get; }
-        public float BestRadarQuality { get; }
-        public int TotalLauncherCount { get; }
-        public int TotalChannelCount { get; }
-        public IReadOnlyDictionary<Guid, int> MissileInventoryByWeaponId { get; }
-        public bool HasCapability => ContributingBattalionCount > 0;
+        public ResolvedAirDefenseAssembly Assembly { get; }
+        public AirDefenseNetworkRole NetworkRoles => Assembly?.NetworkRoles ?? AirDefenseNetworkRole.None;
+        public float TotalNetworkQualityContribution => Assembly?.NetworkQuality ?? 0f;
+        public float MaxNetworkParticipationRangeKm => Assembly?.NetworkParticipationRangeKm ?? 0f;
+        public float BestDetectionRangeKm => Assembly?.BestDetectionRangeKm ?? 0f;
+        public float BestEngagementRangeKm => Assembly?.BestEngagementRangeKm ?? 0f;
+        public float BestRadarQuality => Assembly?.RadarQuality ?? 0f;
+        public int TotalLauncherCount => Assembly?.LauncherCount ?? 0;
+        public int TotalChannelCount => Assembly?.GuidanceChannels ?? 0;
+        public int TotalLaunchesPerSlice => Assembly?.LaunchesPerSlice ?? 0;
+        public IReadOnlyDictionary<Guid, int> MissileInventoryByWeaponId =>
+            Assembly?.MissileInventoryByWeaponId ?? new Dictionary<Guid, int>();
+        public bool HasCapability => ContributingBattalionCount > 0 && (Assembly?.HasCapability ?? false);
 
         public DivisionTemplateMobileAirDefenseStats(
             int contributingBattalionCount,
-            AirDefenseNetworkRole networkRoles,
-            float totalNetworkQualityContribution,
-            float maxNetworkParticipationRangeKm,
-            float bestDetectionRangeKm,
-            float bestEngagementRangeKm,
-            float bestRadarQuality,
-            int totalLauncherCount,
-            int totalChannelCount,
-            IReadOnlyDictionary<Guid, int> missileInventoryByWeaponId)
+            ResolvedAirDefenseAssembly assembly)
         {
             ContributingBattalionCount = contributingBattalionCount;
-            NetworkRoles = networkRoles;
-            TotalNetworkQualityContribution = totalNetworkQualityContribution;
-            MaxNetworkParticipationRangeKm = maxNetworkParticipationRangeKm;
-            BestDetectionRangeKm = bestDetectionRangeKm;
-            BestEngagementRangeKm = bestEngagementRangeKm;
-            BestRadarQuality = bestRadarQuality;
-            TotalLauncherCount = totalLauncherCount;
-            TotalChannelCount = totalChannelCount;
-            MissileInventoryByWeaponId = missileInventoryByWeaponId ?? new Dictionary<Guid, int>();
+            Assembly = assembly ?? Empty.Assembly;
         }
     }
 }
