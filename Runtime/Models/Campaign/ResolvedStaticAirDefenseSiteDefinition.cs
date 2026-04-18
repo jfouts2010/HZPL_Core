@@ -97,10 +97,15 @@ namespace Models.Gameplay.Campaign
             Assembly?.MissileInventoryByWeaponId ?? new Dictionary<Guid, int>();
         public IReadOnlyCollection<Guid> RadarProfileIds => Assembly?.RadarProfileIds ?? Array.Empty<Guid>();
         public IReadOnlyCollection<Guid> MissingComponentIds => Assembly?.MissingComponentIds ?? Array.Empty<Guid>();
+        public bool CanSearch => Assembly?.CanSearch ?? false;
+        public bool CanEngage => Assembly?.CanEngage ?? false;
+        public bool HasPassiveDetection => Assembly?.HasPassiveDetection ?? false;
         public float BestDetectionRangeKm => Assembly?.BestDetectionRangeKm ?? 0f;
         public float BestEngagementRangeKm => Assembly?.BestEngagementRangeKm ?? 0f;
         public float RadarQuality => Assembly?.RadarQuality ?? 0f;
         public float EmissionsStrength => Assembly?.EmissionsStrength ?? 0f;
+        public int TrackCapacity => Assembly?.TrackCapacity ?? 0;
+        public int GuidanceChannels => Assembly?.GuidanceChannels ?? 0;
         public int LaunchesPerSlice => Assembly?.LaunchesPerSlice ?? 0;
 
         public ResolvedStaticAirDefenseSiteDefinition(
