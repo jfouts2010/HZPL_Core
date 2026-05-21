@@ -52,6 +52,14 @@ public class BaseTilemapManager : MonoBehaviour
 
     public virtual void OnEnable()
     {
+        EnsureRiverOverlay();
+    }
+
+    private void EnsureRiverOverlay()
+    {
+        if (riverOverlay != null)
+            return;
+
         riverOverlay = GetComponent<RiverPolylineOverlay>();
         if (riverOverlay == null)
         {
@@ -59,8 +67,9 @@ public class BaseTilemapManager : MonoBehaviour
             go.transform.SetParent(transform, false);
 
             riverOverlay = go.AddComponent<RiverPolylineOverlay>();
-            riverOverlay.grid = grid;
         }
+
+        riverOverlay.grid = grid;
     }
 
     public virtual void OnDisable()
@@ -183,6 +192,8 @@ public class BaseTilemapManager : MonoBehaviour
 
     public void RefreshTilemaps()
     {
+        EnsureRiverOverlay();
+
         landmassTilemap.ClearAllTiles();
         supplyTilemap.ClearAllTiles();
         cityTilemap.ClearAllTiles();
