@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Models.Gameplay.Campaign;
 using UnityEngine;
@@ -30,7 +30,7 @@ namespace Models.Module
         public static readonly Guid CommandPostId = Guid.Parse("02b2c7de-c072-4ff6-a60d-2b9560ac0e88");
         public static readonly Guid MobileSamLauncherId = Guid.Parse("93a2d483-f4bc-4561-aafc-50a8335a5d25");
 
-        public static ModuleData GetTestModule()
+        public static ModuleDefinition GetTestModule()
         {
             var countries = new List<CountryData>();
             var allBattalions = new List<BattalionData>();
@@ -111,14 +111,17 @@ namespace Models.Module
             USSR.AllowedAircraft.AddRange(allAircraft);
             countries.Add(USSR);
 
-            return new ModuleData(
+            return new ModuleDefinition(
+                "standalone",
+                "Standalone",
                 "TestModule",
                 "Test Game",
                 countries,
                 allBattalions,
                 allAircraft,
                 allAirDefenseComponents,
-                allWeaponProfiles);
+                allWeaponProfiles,
+                new NoOpSimAdapter());
         }
 
         private static List<WeaponProfileData> BuildWeaponProfiles()

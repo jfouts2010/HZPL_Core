@@ -27,7 +27,7 @@ namespace Models.Module
 
         public static Campaign CreateBasicGameplayCampaign(Guid landmassTileId = default, Guid terrainId = default)
         {
-            var moduleData = TestModule.GetTestModule();
+            var moduleDefinition = TestModule.GetTestModule();
             var campaign = new Campaign
             {
                 TileSeparationKM = 50f,
@@ -47,7 +47,7 @@ namespace Models.Module
             campaign.divisionTemplates = BuildDivisionTemplates();
             campaign.unitSpawnPoints = BuildUnitSpawns();
             campaign.Airports = BuildAirports();
-            campaign.Wings = BuildAirWings(moduleData);
+            campaign.Wings = BuildAirWings(moduleDefinition);
             campaign.StaticAirDefenseSites = BuildStaticAirDefenseSites();
             campaign.EnsureAirDataInitialized();
 
@@ -232,9 +232,9 @@ namespace Models.Module
             };
         }
 
-        private static List<AirWing> BuildAirWings(ModuleData moduleData)
+        private static List<AirWing> BuildAirWings(ModuleDefinition moduleDefinition)
         {
-            var aircraftById = moduleData?.AircraftById ?? new Dictionary<Guid, AircraftData>();
+            var aircraftById = moduleDefinition?.AircraftById ?? new Dictionary<Guid, AircraftData>();
             aircraftById.TryGetValue(TestModule.MultiroleAircraftId, out var multirole);
             aircraftById.TryGetValue(TestModule.FighterAircraftId, out var fighter);
 

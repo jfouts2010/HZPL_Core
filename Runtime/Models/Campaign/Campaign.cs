@@ -56,7 +56,7 @@ namespace Models.Gameplay.Campaign
             get
             {
                 // Resolve by ID from module data.
-                var all = ModuleSingleton.Instance?.ModuleData?.ModuleCountries ?? new List<CountryData>();
+                var all = ModuleSingleton.Instance?.ActiveModule?.ModuleCountries ?? new List<CountryData>();
 
                 // Preserve the ordering from campaign.Countries when possible.
                 var byId = all.ToDictionary(c => c.ID, c => c);
@@ -134,6 +134,7 @@ namespace Models.Gameplay.Campaign
         private void OnDeserialized(StreamingContext context)
         {
             EnsureAirDataInitialized();
+            EnsureTemplateMetadataInitialized();
             tileData ??= new Dictionary<Vector3Int, HZPLTileData>();
             Countries ??= new List<Guid>();
             CountryAlliance ??= new Dictionary<Guid, Alliance>();

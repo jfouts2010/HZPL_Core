@@ -4,6 +4,7 @@ using System.Linq;
 using Models.Gameplay.Campaign;
 using Monobehaviours.Singletons;
 using UnityEngine;
+using Models.Module;
 
 namespace Services
 {
@@ -15,16 +16,16 @@ namespace Services
     {
         public static ResolvedStaticAirDefenseSiteDefinition Resolve(
             StaticAirDefenseSiteDefinition definition,
-            ModuleData moduleData = null)
+            ModuleDefinition moduleDefinition = null)
         {
             if (definition == null)
                 return new ResolvedStaticAirDefenseSiteDefinition(
                     null,
-                    AirDefenseAssemblyResolver.Resolve(Array.Empty<AirDefenseComponentComposition>(), moduleData));
+                    AirDefenseAssemblyResolver.Resolve(Array.Empty<AirDefenseComponentComposition>(), moduleDefinition));
 
             return new ResolvedStaticAirDefenseSiteDefinition(
                 definition,
-                AirDefenseAssemblyResolver.Resolve(definition.Components, moduleData, definition.Name));
+                AirDefenseAssemblyResolver.Resolve(definition.Components, moduleDefinition, definition.Name));
         }
     }
 
@@ -32,10 +33,10 @@ namespace Services
     {
         public static ResolvedAirDefenseAssembly Resolve(
             IEnumerable<AirDefenseComponentComposition> components,
-            ModuleData moduleData = null,
+            ModuleDefinition moduleDefinition = null,
             string debugOwnerName = null)
         {
-            moduleData ??= ModuleSingleton.Instance?.ModuleData;
+            moduleDefinition ??= ModuleSingleton.Instance?.ActiveModule;
 
             var resolvedComponents = new List<ResolvedAirDefenseComponentComposition>();
             var missingComponentIds = new List<Guid>();
@@ -63,7 +64,7 @@ namespace Services
             int launcherCount = 0;
             int launchesPerSlice = 0;
 
-            var componentsById = moduleData?.AirDefenseComponentsById;
+            var componentsById = moduleDefinition?.AirDefenseComponentsById;
             foreach (var entry in components ?? Enumerable.Empty<AirDefenseComponentComposition>())
             {
                 if (entry == null || entry.Count <= 0)

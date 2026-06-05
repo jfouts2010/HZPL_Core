@@ -5,6 +5,7 @@ using Models.Gameplay.Campaign;
 using Monobehaviours.Singletons;
 using ScriptableObjects.Gameplay.Units;
 using UnityEngine;
+using Models.Module;
 
 namespace Services
 {
@@ -18,7 +19,7 @@ namespace Services
         /// Builds the fully resolved runtime view used by editor and presentation code.
         /// Missing battalion IDs are reported and skipped so bad template data is visible.
         /// </summary>
-        public static ResolvedDivisionTemplate Resolve(DivisionTemplate template, ModuleData moduleData = null)
+        public static ResolvedDivisionTemplate Resolve(DivisionTemplate template, ModuleDefinition moduleDefinition = null)
         {
             if (template == null)
             {
@@ -31,11 +32,11 @@ namespace Services
                     Array.Empty<Guid>());
             }
 
-            moduleData ??= ModuleSingleton.Instance?.ModuleData;
+            moduleDefinition ??= ModuleSingleton.Instance?.ActiveModule;
 
             var resolvedComposition = new List<ResolvedBattalionComposition>();
             var missingBattalionIds = new List<Guid>();
-            var battalionsById = moduleData?.BattalionsById;
+            var battalionsById = moduleDefinition?.BattalionsById;
 
             foreach (var line in template.Composition ?? Enumerable.Empty<DivisionTemplate.BattalionComposition>())
             {
@@ -62,7 +63,7 @@ namespace Services
                 template,
                 resolvedComposition,
                 BuildStats(resolvedComposition),
-                BuildMobileAirDefenseStats(resolvedComposition, moduleData),
+                BuildMobileAirDefenseStats(resolvedComposition, moduleDefinition),
                 ResolveDivisionIcon(resolvedComposition),
                 missingBattalionIds);
         }
@@ -70,9 +71,9 @@ namespace Services
         /// <summary>
         /// Convenience path when callers only need the aggregated base stats.
         /// </summary>
-        public static DivisionTemplateStats ResolveStats(DivisionTemplate template, ModuleData moduleData = null)
+        public static DivisionTemplateStats ResolveStats(DivisionTemplate template, ModuleDefinition moduleDefinition = null)
         {
-            return Resolve(template, moduleData).Stats;
+            return Resolve(template, moduleDefinition).Stats;
         }
 
         /// <summary>
@@ -80,9 +81,9 @@ namespace Services
         /// </summary>
         public static DivisionTemplateMobileAirDefenseStats ResolveMobileAirDefenseStats(
             DivisionTemplate template,
-            ModuleData moduleData = null)
+            ModuleDefinition moduleDefinition = null)
         {
-            return Resolve(template, moduleData).MobileAirDefense;
+            return Resolve(template, moduleDefinition).MobileAirDefense;
         }
 
         /// <summary>
@@ -123,7 +124,7 @@ namespace Services
         /// </summary>
         private static DivisionTemplateMobileAirDefenseStats BuildMobileAirDefenseStats(
             IReadOnlyList<ResolvedBattalionComposition> composition,
-            ModuleData moduleData)
+            ModuleDefinition moduleDefinition)
         {
             if (composition == null || composition.Count == 0)
                 return DivisionTemplateMobileAirDefenseStats.Empty;
@@ -162,7 +163,7 @@ namespace Services
 
             var assembly = AirDefenseAssemblyResolver.Resolve(
                 aggregatedComponents,
-                moduleData,
+                moduleDefinition,
                 "DivisionTemplateMobileAirDefense");
 
             return new DivisionTemplateMobileAirDefenseStats(
