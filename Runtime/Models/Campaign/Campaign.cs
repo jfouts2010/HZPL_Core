@@ -12,7 +12,14 @@ namespace Models.Gameplay.Campaign
     [Serializable]
     public class Campaign
     {
+        public const string DefaultModuleId = "standalone";
+        public static readonly DateTime DefaultCampaignStartTime = new DateTime(1990, 1, 1, 6, 0, 0);
+
         public string Name { get; private set; }
+        public string ModuleId = DefaultModuleId;
+        public DateTime CampaignStartTime = DefaultCampaignStartTime;
+        public SimulationSettings SimulationSettings = new SimulationSettings();
+        public string ContentHash = string.Empty;
 
         [JsonConverter(typeof(Vector3IntDictionaryConverter))]
         public Dictionary<Vector3Int, HZPLTileData> tileData = new Dictionary<Vector3Int, HZPLTileData>();
@@ -83,6 +90,7 @@ namespace Models.Gameplay.Campaign
             areas = new List<Area>();
             unitSpawnPoints = new List<UnitSpawn>();
             EnsureAirDataInitialized();
+            EnsureTemplateMetadataInitialized();
         }
 
         public void EnsureAirDataInitialized()
@@ -91,6 +99,17 @@ namespace Models.Gameplay.Campaign
             Airports ??= new List<AirportDefinition>();
             StaticAirDefenseSites ??= new List<StaticAirDefenseSiteDefinition>();
             NormalizeAirportData();
+        }
+
+        public void EnsureTemplateMetadataInitialized()
+        {
+            ModuleId = string.IsNullOrWhiteSpace(ModuleId) ? DefaultModuleId : ModuleId.Trim();
+            if (CampaignStartTime == default)
+                CampaignStartTime = DefaultCampaignStartTime;
+
+            SimulationSettings ??= new SimulationSettings();
+            SimulationSettings.Normalize();
+            ContentHash ??= string.Empty;
         }
 
         public bool ShouldSerializeairWingSpawns()
