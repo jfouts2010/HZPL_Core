@@ -9,10 +9,8 @@ namespace Monobehaviours.Singletons
     {
         public const string StandaloneModuleId = "standalone";
 
-        private static readonly IReadOnlyList<ModuleDefinition> Modules = new List<ModuleDefinition>
-        {
-            TestModule.GetTestModule()
-        };
+        private static IReadOnlyList<ModuleDefinition> _modules;
+        private static IReadOnlyList<ModuleDefinition> Modules => _modules ??= BuildModules();
 
         private ModuleDefinition _activeModule;
         private bool _hasActiveModuleSelection;
@@ -66,6 +64,14 @@ namespace Monobehaviours.Singletons
                 return Modules[0];
 
             throw new InvalidOperationException("No modules are registered.");
+        }
+
+        private static IReadOnlyList<ModuleDefinition> BuildModules()
+        {
+            return new List<ModuleDefinition>
+            {
+                TestModule.GetTestModule()
+            };
         }
     }
 }
