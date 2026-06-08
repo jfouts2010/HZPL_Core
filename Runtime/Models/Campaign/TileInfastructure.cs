@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 
 namespace Models.Gameplay.Campaign
@@ -53,7 +53,7 @@ namespace Models.Gameplay.Campaign
         // Buildings (level 0 = not present, 1-10 = level)
         public int fortificationLevel = 0;
         public int portLevel = 0;
-        // Legacy tile-authored airfield data retained only so older campaign files can migrate to AirportDefinition.
+        // Legacy tile-authored airfield data retained only so older CampaignTemplate files can migrate to AirportDefinition.
         public int airfieldLevel = 0;
         
         // Resources (level 0 = not present, 1-10 = level)

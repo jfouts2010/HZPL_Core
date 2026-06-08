@@ -11,7 +11,7 @@ namespace Models.Gameplay.Campaign
 
         /// <summary>
         /// Asset path to a Sprite used as the squadron patch (Editor only).
-        /// This is stored as a string so Campaign JSON saves remain portable.
+        /// This is stored as a string so CampaignTemplate JSON saves remain portable.
         /// </summary>
         public string PatchSpritePath;
         public int AircraftCount = 24;

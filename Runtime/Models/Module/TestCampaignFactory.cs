@@ -25,10 +25,10 @@ namespace Models.Module
         public static readonly Guid RedIadsSiteId = Guid.Parse("f8160c6e-e185-42b8-b39e-604c5360844a");
         public static readonly Guid BlueIadsSiteId = Guid.Parse("768a3441-adb7-4e4c-bef5-d72ea51be61f");
 
-        public static Campaign CreateBasicGameplayCampaign(Guid landmassTileId = default, Guid terrainId = default)
+        public static CampaignTemplate CreateBasicGameplayCampaign(Guid landmassTileId = default, Guid terrainId = default)
         {
             var moduleDefinition = TestModule.GetTestModule();
-            var campaign = new Campaign
+            var campaign = new CampaignTemplate
             {
                 TileSeparationKM = 50f,
                 TurnsPerDay = 4f,
