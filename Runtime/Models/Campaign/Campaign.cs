@@ -93,7 +93,7 @@ namespace Models.Gameplay.Campaign
             EnsureTemplateMetadataInitialized();
         }
 
-        public void EnsureAirDataInitialized()
+        private void EnsureAirDataInitialized()
         {
             Wings ??= new List<AirWing>();
             Airports ??= new List<AirportDefinition>();
@@ -101,7 +101,7 @@ namespace Models.Gameplay.Campaign
             NormalizeAirportData();
         }
 
-        public void EnsureTemplateMetadataInitialized()
+        private void EnsureTemplateMetadataInitialized()
         {
             ModuleId = string.IsNullOrWhiteSpace(ModuleId) ? DefaultModuleId : ModuleId.Trim();
             if (CampaignStartTime == default)

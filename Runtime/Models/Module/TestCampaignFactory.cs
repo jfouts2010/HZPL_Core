@@ -49,7 +49,6 @@ namespace Models.Module
             campaign.Airports = BuildAirports();
             campaign.Wings = BuildAirWings(moduleDefinition);
             campaign.StaticAirDefenseSites = BuildStaticAirDefenseSites();
-            campaign.EnsureAirDataInitialized();
 
             return campaign;
         }

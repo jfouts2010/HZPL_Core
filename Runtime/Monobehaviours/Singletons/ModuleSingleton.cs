@@ -15,8 +15,10 @@ namespace Monobehaviours.Singletons
         };
 
         private ModuleDefinition _activeModule;
+        private bool _hasActiveModuleSelection;
 
         public ModuleDefinition ActiveModule => _activeModule ??= GetDefaultModule();
+        public bool HasActiveModuleSelection => _hasActiveModuleSelection;
 
         public IReadOnlyList<ModuleDefinition> GetAll()
         {
@@ -37,6 +39,7 @@ namespace Monobehaviours.Singletons
         public void SetActive(ModuleDefinition module)
         {
             _activeModule = module ?? throw new ArgumentNullException(nameof(module));
+            _hasActiveModuleSelection = true;
         }
 
         public bool TrySetActive(string moduleId)
@@ -51,6 +54,7 @@ namespace Monobehaviours.Singletons
         public void ResetToDefault()
         {
             _activeModule = GetDefaultModule();
+            _hasActiveModuleSelection = false;
         }
 
         private ModuleDefinition GetDefaultModule()
