@@ -1,20 +1,22 @@
 using System;
 using System.Linq;
+using Newtonsoft.Json;
 using ScriptableObjects.Gameplay;
 using UnityEngine;
 
 namespace Models.Gameplay.Campaign
 {
     /// <summary>
-    /// Stores all editable data for a single hex tile in the campaign.
+    /// Stores static, authored data for a single hex tile in a campaign template.
     /// </summary>
-    public class HZPLTileData
+    public class TemplateTileData
     {
         public Guid landmassTileID { get; set; }
         public Guid areaId { get; set; }
         public Guid terrainID { get; set; }
         public bool LandTile = false;
-        public Alliance controllingAlliance { get; set; } = Alliance.Neutral;
+        [JsonIgnore]
+        public Alliance startingAlliance { get; set; } = Alliance.Neutral;
         /// <summary>
         /// Optional user-defined name/label for this tile.
         /// </summary>
@@ -42,6 +44,117 @@ namespace Models.Gameplay.Campaign
         public HZPLTerrain GetTileTerrain(BaseTilemapManager TMM)
         {
             return TMM.terrainTypes.FirstOrDefault(p => p.ID == terrainID);
+        }
+
+        public TemplateTileData CloneTemplate()
+        {
+            return new TemplateTileData
+            {
+                landmassTileID = landmassTileID,
+                areaId = areaId,
+                terrainID = terrainID,
+                LandTile = LandTile,
+                startingAlliance = startingAlliance,
+                tileName = tileName,
+                infrastructure = TileInfrastructureClone.Clone(infrastructure),
+                rivers = rivers
+            };
+        }
+    }
+
+    /// <summary>
+    /// Stores mutable tile state that belongs to a gameplay save/runtime session.
+    /// </summary>
+    public class TileRuntimeOverlay
+    {
+        public Alliance controllingAlliance { get; set; } = Alliance.Neutral;
+        public TileInfrastructure infrastructure = new TileInfrastructure();
+
+        public static TileRuntimeOverlay FromTemplate(TemplateTileData template)
+        {
+            return new TileRuntimeOverlay
+            {
+                controllingAlliance = template?.startingAlliance ?? Alliance.Neutral,
+                infrastructure = TileInfrastructureClone.Clone(template?.infrastructure)
+            };
+        }
+
+        public static TileRuntimeOverlay FromTile(HZPLTileData tile)
+        {
+            return new TileRuntimeOverlay
+            {
+                controllingAlliance = tile?.controllingAlliance ?? Alliance.Neutral,
+                infrastructure = TileInfrastructureClone.Clone(tile?.infrastructure)
+            };
+        }
+    }
+
+    /// <summary>
+    /// Hydrated gameplay/editor view over template tile data plus mutable runtime overlay.
+    /// </summary>
+    public class HZPLTileData : TemplateTileData
+    {
+        public Alliance controllingAlliance
+        {
+            get => startingAlliance;
+            set => startingAlliance = value;
+        }
+
+        public HZPLTileData CloneTile()
+        {
+            return new HZPLTileData
+            {
+                landmassTileID = landmassTileID,
+                areaId = areaId,
+                terrainID = terrainID,
+                LandTile = LandTile,
+                controllingAlliance = controllingAlliance,
+                tileName = tileName,
+                infrastructure = TileInfrastructureClone.Clone(infrastructure),
+                rivers = rivers
+            };
+        }
+
+        public static HZPLTileData FromTemplateAndOverlay(TemplateTileData template, TileRuntimeOverlay overlay)
+        {
+            template ??= new TemplateTileData();
+            overlay ??= TileRuntimeOverlay.FromTemplate(template);
+
+            return new HZPLTileData
+            {
+                landmassTileID = template.landmassTileID,
+                areaId = template.areaId,
+                terrainID = template.terrainID,
+                LandTile = template.LandTile,
+                controllingAlliance = overlay.controllingAlliance,
+                tileName = template.tileName,
+                infrastructure = TileInfrastructureClone.Clone(overlay.infrastructure),
+                rivers = template.rivers
+            };
+        }
+    }
+
+    internal static class TileInfrastructureClone
+    {
+        public static TileInfrastructure Clone(TileInfrastructure source)
+        {
+            if (source == null)
+                return new TileInfrastructure();
+
+            return new TileInfrastructure
+            {
+                cityType = source.cityType,
+                infrastructureLevel = source.infrastructureLevel,
+                isSupplyHub = source.isSupplyHub,
+                supplyLineLevel = source.supplyLineLevel,
+                fortificationLevel = source.fortificationLevel,
+                portLevel = source.portLevel,
+                airfieldLevel = source.airfieldLevel,
+                oilLevel = source.oilLevel,
+                electricityLevel = source.electricityLevel,
+                steelLevel = source.steelLevel,
+                factoryLevel = source.factoryLevel
+            };
         }
     }
 
