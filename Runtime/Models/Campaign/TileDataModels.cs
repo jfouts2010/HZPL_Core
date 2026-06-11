@@ -7,29 +7,27 @@ using UnityEngine;
 namespace Models.Gameplay.Campaign
 {
     /// <summary>
-    /// Stores static, authored data for a single hex tile in a campaign template.
+    /// Stores static, authored geography for a single campaign-template hex.
     /// </summary>
+    [Serializable]
     public class TemplateTileData
     {
         public Guid landmassTileID { get; set; }
         public Guid areaId { get; set; }
         public Guid terrainID { get; set; }
         public bool LandTile = false;
-        [JsonIgnore]
-        public Alliance startingAlliance { get; set; } = Alliance.Neutral;
+
         /// <summary>
         /// Optional user-defined name/label for this tile.
         /// </summary>
         public string tileName { get; set; } = string.Empty;
-
-        public TileInfrastructure infrastructure = new TileInfrastructure();
 
         /// <summary>
         /// Bitmask representing rivers on the six edges of this hex tile.
         /// Bit index corresponds to a direction (0-5). See HexDirection enum.
         /// </summary>
         public byte rivers = 0;
-        
+
         public bool HasRiver(HexDirection dir) => (rivers & (1 << (int)dir)) != 0;
 
         public void SetRiver(HexDirection dir, bool value)
@@ -41,9 +39,9 @@ namespace Models.Gameplay.Campaign
 
         public void ClearRivers() => rivers = 0;
 
-        public HZPLTerrain GetTileTerrain(BaseTilemapManager TMM)
+        public HZPLTerrain GetTileTerrain(BaseTilemapManager tilemapManager)
         {
-            return TMM.terrainTypes.FirstOrDefault(p => p.ID == terrainID);
+            return tilemapManager.terrainTypes.FirstOrDefault(p => p.ID == terrainID);
         }
 
         public TemplateTileData CloneTemplate()
@@ -54,34 +52,52 @@ namespace Models.Gameplay.Campaign
                 areaId = areaId,
                 terrainID = terrainID,
                 LandTile = LandTile,
-                startingAlliance = startingAlliance,
                 tileName = tileName,
-                infrastructure = TileInfrastructureClone.Clone(infrastructure),
                 rivers = rivers
             };
         }
     }
 
     /// <summary>
-    /// Stores mutable tile state that belongs to a gameplay save/runtime session.
+    /// Stores day-zero tile disposition authored on a campaign template.
     /// </summary>
-    public class TileRuntimeOverlay
+    [Serializable]
+    public class StartingTileData
+    {
+        public Alliance startingAlliance { get; set; } = Alliance.Neutral;
+        public TileInfrastructure infrastructure = new TileInfrastructure();
+
+        public StartingTileData CloneStarting()
+        {
+            return new StartingTileData
+            {
+                startingAlliance = startingAlliance,
+                infrastructure = TileInfrastructureClone.Clone(infrastructure)
+            };
+        }
+    }
+
+    /// <summary>
+    /// Stores persisted live tile state in gameplay saves.
+    /// </summary>
+    [Serializable]
+    public class RuntimeTileData
     {
         public Alliance controllingAlliance { get; set; } = Alliance.Neutral;
         public TileInfrastructure infrastructure = new TileInfrastructure();
 
-        public static TileRuntimeOverlay FromTemplate(TemplateTileData template)
+        public static RuntimeTileData FromStarting(StartingTileData starting)
         {
-            return new TileRuntimeOverlay
+            return new RuntimeTileData
             {
-                controllingAlliance = template?.startingAlliance ?? Alliance.Neutral,
-                infrastructure = TileInfrastructureClone.Clone(template?.infrastructure)
+                controllingAlliance = starting?.startingAlliance ?? Alliance.Neutral,
+                infrastructure = TileInfrastructureClone.Clone(starting?.infrastructure)
             };
         }
 
-        public static TileRuntimeOverlay FromTile(HZPLTileData tile)
+        public static RuntimeTileData FromGameplayTile(GameplayTile tile)
         {
-            return new TileRuntimeOverlay
+            return new RuntimeTileData
             {
                 controllingAlliance = tile?.controllingAlliance ?? Alliance.Neutral,
                 infrastructure = TileInfrastructureClone.Clone(tile?.infrastructure)
@@ -90,51 +106,36 @@ namespace Models.Gameplay.Campaign
     }
 
     /// <summary>
-    /// Hydrated gameplay/editor view over template tile data plus mutable runtime overlay.
+    /// Simulation-only fused tile. Do not persist as a template or save record.
     /// </summary>
-    public class HZPLTileData : TemplateTileData
+    [Serializable]
+    public class GameplayTile : TemplateTileData
     {
-        public Alliance controllingAlliance
-        {
-            get => startingAlliance;
-            set => startingAlliance = value;
-        }
+        public Alliance controllingAlliance { get; set; } = Alliance.Neutral;
+        public TileInfrastructure infrastructure = new TileInfrastructure();
 
-        public HZPLTileData CloneTile()
-        {
-            return new HZPLTileData
-            {
-                landmassTileID = landmassTileID,
-                areaId = areaId,
-                terrainID = terrainID,
-                LandTile = LandTile,
-                controllingAlliance = controllingAlliance,
-                tileName = tileName,
-                infrastructure = TileInfrastructureClone.Clone(infrastructure),
-                rivers = rivers
-            };
-        }
-
-        public static HZPLTileData FromTemplateAndOverlay(TemplateTileData template, TileRuntimeOverlay overlay)
+        public static GameplayTile FromTemplateAndRuntime(
+            TemplateTileData template,
+            RuntimeTileData runtime)
         {
             template ??= new TemplateTileData();
-            overlay ??= TileRuntimeOverlay.FromTemplate(template);
+            runtime ??= RuntimeTileData.FromStarting(null);
 
-            return new HZPLTileData
+            return new GameplayTile
             {
                 landmassTileID = template.landmassTileID,
                 areaId = template.areaId,
                 terrainID = template.terrainID,
                 LandTile = template.LandTile,
-                controllingAlliance = overlay.controllingAlliance,
+                controllingAlliance = runtime.controllingAlliance,
                 tileName = template.tileName,
-                infrastructure = TileInfrastructureClone.Clone(overlay.infrastructure),
+                infrastructure = TileInfrastructureClone.Clone(runtime.infrastructure),
                 rivers = template.rivers
             };
         }
     }
 
-    internal static class TileInfrastructureClone
+    public static class TileInfrastructureClone
     {
         public static TileInfrastructure Clone(TileInfrastructure source)
         {
@@ -188,6 +189,4 @@ namespace Models.Gameplay.Campaign
             }
         }
     }
-
- 
 }

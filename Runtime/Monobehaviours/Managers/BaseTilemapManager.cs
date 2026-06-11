@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Models.CampaignEditor;
@@ -43,7 +43,7 @@ public class BaseTilemapManager : MonoBehaviour
     public Vector3 GetCellCenterWorld(Vector3Int gridPosition) => grid.GetCellCenterWorld(gridPosition);
 
     public float overlayAlphaValue = 0.3f;
-    private Dictionary<Vector3Int, HZPLTileData> TileData;
+    private GameplayTileStore TileData;
     private List<Area> Areas;
     private HashSet<Vector3Int> AirportCells = new HashSet<Vector3Int>();
     public List<HZPLTerrain> terrainTypes;
@@ -178,7 +178,7 @@ public class BaseTilemapManager : MonoBehaviour
         }
     }
 
-    public void SetCampaign(Dictionary<Vector3Int, HZPLTileData> tileData,
+    public void SetCampaign(GameplayTileStore tileData,
         List<Area> areas,
         List<AirportDefinition> airports = null)
     {
@@ -188,6 +188,19 @@ public class BaseTilemapManager : MonoBehaviour
             ? new HashSet<Vector3Int>(airports.Where(airport => airport != null).Select(airport => airport.Tile))
             : new HashSet<Vector3Int>();
         RefreshTilemaps();
+    }
+
+    public void SetCampaign(Dictionary<Vector3Int, GameplayTile> tileData,
+        List<Area> areas,
+        List<AirportDefinition> airports = null)
+    {
+        if (tileData == null)
+        {
+            SetCampaign((GameplayTileStore)null, areas, airports);
+            return;
+        }
+
+        SetCampaign(GameplayTileStore.FromTiles(tileData), areas, airports);
     }
 
     public void RefreshTilemaps()
@@ -205,12 +218,15 @@ public class BaseTilemapManager : MonoBehaviour
         steelTilemap.ClearAllTiles();
         overlayTilemap.ClearAllTiles();
         controlTilemap.ClearAllTiles();
-        foreach (var kvp in TileData)
+        if (TileData != null)
         {
-            UpdateTile(kvp.Key);
-        }
+            foreach (var kvp in TileData)
+            {
+                UpdateTile(kvp.Key);
+            }
 
-        riverOverlay.RebuildAll(TileData);
+            riverOverlay.RebuildAll(TileData);
+        }
         overlayTilemap.enabled = false;
         controlTilemap.enabled = false;
     }

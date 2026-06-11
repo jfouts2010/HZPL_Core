@@ -37,7 +37,7 @@ namespace Models.CampaignEditor
 
         #region Public API
 
-        public void RebuildAll(Dictionary<Vector3Int, HZPLTileData> tileData)
+        public void RebuildAll(IReadOnlyDictionary<Vector3Int, GameplayTile> tileData)
         {
             ClearAllLines();
 
@@ -105,7 +105,7 @@ namespace Models.CampaignEditor
 
         #region Build Graph
 
-        private RiverGraph BuildCornerGraph(Dictionary<Vector3Int, HZPLTileData> tileData)
+        private RiverGraph BuildCornerGraph(IReadOnlyDictionary<Vector3Int, GameplayTile> tileData)
         {
             var graph = new RiverGraph();
 

@@ -36,7 +36,7 @@ namespace Models.Module
                 TopRightCorner = new Vector2Int(150, 100)
             };
 
-            campaign.tileData = BuildTileData(landmassTileId, terrainId);
+            (campaign.templateTiles, campaign.startingTiles) = BuildTileData(landmassTileId, terrainId);
             campaign.areas = BuildAreas();
             campaign.Countries = new List<Guid> { TestModule.BlueCountryId, TestModule.RedCountryId };
             campaign.CountryAlliance = new Dictionary<Guid, Alliance>
@@ -53,9 +53,12 @@ namespace Models.Module
             return campaign;
         }
 
-        private static Dictionary<Vector3Int, HZPLTileData> BuildTileData(Guid landmassTileId, Guid terrainId)
+        private static (
+            Dictionary<Vector3Int, TemplateTileData> TemplateTiles,
+            Dictionary<Vector3Int, StartingTileData> StartingTiles) BuildTileData(Guid landmassTileId, Guid terrainId)
         {
-            var tileData = new Dictionary<Vector3Int, HZPLTileData>();
+            var templateTiles = new Dictionary<Vector3Int, TemplateTileData>();
+            var startingTiles = new Dictionary<Vector3Int, StartingTileData>();
 
             for (int x = -3; x <= 3; x++)
             {
@@ -65,20 +68,23 @@ namespace Models.Module
                     var alliance = x < 0 ? Alliance.BlueFor : x > 0 ? Alliance.RedFor : Alliance.Neutral;
                     var areaId = x < 0 ? BlueAreaId : x > 0 ? RedAreaId : CentralAreaId;
 
-                    tileData[cell] = new HZPLTileData
+                    templateTiles[cell] = new TemplateTileData
                     {
                         landmassTileID = landmassTileId,
                         terrainID = terrainId,
                         LandTile = true,
-                        controllingAlliance = alliance,
                         areaId = areaId,
-                        tileName = BuildTileName(cell, alliance),
+                        tileName = BuildTileName(cell, alliance)
+                    };
+                    startingTiles[cell] = new StartingTileData
+                    {
+                        startingAlliance = alliance,
                         infrastructure = BuildInfrastructure(cell, alliance)
                     };
                 }
             }
 
-            return tileData;
+            return (templateTiles, startingTiles);
         }
 
         private static TileInfrastructure BuildInfrastructure(Vector3Int cell, Alliance alliance)

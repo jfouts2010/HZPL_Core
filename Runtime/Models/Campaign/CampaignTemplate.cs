@@ -22,7 +22,10 @@ namespace Models.Gameplay.Campaign
         public string ContentHash = string.Empty;
 
         [JsonConverter(typeof(Vector3IntDictionaryConverter))]
-        public Dictionary<Vector3Int, HZPLTileData> tileData = new Dictionary<Vector3Int, HZPLTileData>();
+        public Dictionary<Vector3Int, TemplateTileData> templateTiles = new Dictionary<Vector3Int, TemplateTileData>();
+
+        [JsonConverter(typeof(Vector3IntStartingTileDictionaryConverter))]
+        public Dictionary<Vector3Int, StartingTileData> startingTiles = new Dictionary<Vector3Int, StartingTileData>();
 
         public List<Guid> Countries = new  List<Guid>();
         public Dictionary<Guid, Alliance> CountryAlliance = new  Dictionary<Guid, Alliance>();
@@ -83,9 +86,14 @@ namespace Models.Gameplay.Campaign
             {
                 for (int y = -50; y < 50; y++)
                 {
-                    tileData.Add(new Vector3Int(x, y, 0), new HZPLTileData());
+                    var cell = new Vector3Int(x, y, 0);
+                    templateTiles.Add(cell, new TemplateTileData());
+                    startingTiles.Add(cell, new StartingTileData());
                 }
             }
+
+            BottomLeftCorner = new Vector2Int(-50, -50);
+            TopRightCorner = new Vector2Int(50, 50);
 
             areas = new List<Area>();
             unitSpawnPoints = new List<UnitSpawn>();
@@ -135,13 +143,137 @@ namespace Models.Gameplay.Campaign
         {
             EnsureAirDataInitialized();
             EnsureTemplateMetadataInitialized();
-            tileData ??= new Dictionary<Vector3Int, HZPLTileData>();
             Countries ??= new List<Guid>();
             CountryAlliance ??= new Dictionary<Guid, Alliance>();
             divisionTemplates ??= new List<DivisionTemplate>();
             areas ??= new List<Area>();
             unitSpawnPoints ??= new List<UnitSpawn>();
+            EnsureTileCornersInitialized();
         }
+
+        /// <summary>
+        /// Keeps mission corner metadata aligned with template tiles.
+        /// <see cref="TopRightCorner"/> is stored as an exclusive upper bound.
+        /// </summary>
+        public void EnsureTileCornersInitialized()
+        {
+            templateTiles ??= new Dictionary<Vector3Int, TemplateTileData>();
+            if (templateTiles.Count == 0)
+                return;
+
+            var minX = templateTiles.Keys.Min(cell => cell.x);
+            var minY = templateTiles.Keys.Min(cell => cell.y);
+            var maxX = templateTiles.Keys.Max(cell => cell.x);
+            var maxY = templateTiles.Keys.Max(cell => cell.y);
+            var derivedBottomLeft = new Vector2Int(minX, minY);
+            var derivedExclusiveTopRight = new Vector2Int(maxX + 1, maxY + 1);
+
+            if (!TryGetExclusiveCornerBounds(out var bottomLeft, out var exclusiveTopRight))
+            {
+                BottomLeftCorner = derivedBottomLeft;
+                TopRightCorner = derivedExclusiveTopRight;
+                return;
+            }
+
+            if (bottomLeft.x > minX || bottomLeft.y > minY ||
+                exclusiveTopRight.x <= maxX || exclusiveTopRight.y <= maxY)
+            {
+                BottomLeftCorner = new Vector2Int(
+                    Mathf.Min(bottomLeft.x, minX),
+                    Mathf.Min(bottomLeft.y, minY));
+                TopRightCorner = new Vector2Int(
+                    Mathf.Max(exclusiveTopRight.x, maxX + 1),
+                    Mathf.Max(exclusiveTopRight.y, maxY + 1));
+            }
+        }
+
+        public bool TryGetInclusiveTopRightCorner(out Vector2Int inclusiveTopRight)
+        {
+            if (!TryGetExclusiveCornerBounds(out _, out var exclusiveTopRight))
+            {
+                inclusiveTopRight = default;
+                return false;
+            }
+
+            inclusiveTopRight = new Vector2Int(exclusiveTopRight.x - 1, exclusiveTopRight.y - 1);
+            return true;
+        }
+
+        public void SetMissionCorners(Vector2Int bottomLeft, Vector2Int inclusiveTopRight)
+        {
+            BottomLeftCorner = bottomLeft;
+            TopRightCorner = new Vector2Int(inclusiveTopRight.x + 1, inclusiveTopRight.y + 1);
+            EnsureTileCornersInitialized();
+        }
+
+        private bool TryGetExclusiveCornerBounds(out Vector2Int bottomLeft, out Vector2Int exclusiveTopRight)
+        {
+            bottomLeft = BottomLeftCorner;
+            exclusiveTopRight = TopRightCorner;
+            return exclusiveTopRight.x > bottomLeft.x && exclusiveTopRight.y > bottomLeft.y;
+        }
+
+        public bool HasTile(Vector3Int cell) => templateTiles != null && templateTiles.ContainsKey(cell);
+
+        public TemplateTileData EnsureTemplateTile(Vector3Int cell)
+        {
+            templateTiles ??= new Dictionary<Vector3Int, TemplateTileData>();
+            if (!templateTiles.TryGetValue(cell, out var tile) || tile == null)
+                templateTiles[cell] = tile = new TemplateTileData();
+
+            startingTiles ??= new Dictionary<Vector3Int, StartingTileData>();
+            if (!startingTiles.ContainsKey(cell))
+                startingTiles[cell] = new StartingTileData();
+
+            return tile;
+        }
+
+        public StartingTileData EnsureStartingTile(Vector3Int cell)
+        {
+            startingTiles ??= new Dictionary<Vector3Int, StartingTileData>();
+            if (!startingTiles.TryGetValue(cell, out var tile) || tile == null)
+                startingTiles[cell] = tile = new StartingTileData();
+
+            templateTiles ??= new Dictionary<Vector3Int, TemplateTileData>();
+            if (!templateTiles.ContainsKey(cell))
+                templateTiles[cell] = new TemplateTileData();
+
+            return tile;
+        }
+
+        public bool TryGetTemplateTile(Vector3Int cell, out TemplateTileData tile)
+        {
+            tile = null;
+            return templateTiles != null && templateTiles.TryGetValue(cell, out tile) && tile != null;
+        }
+
+        public bool TryGetStartingTile(Vector3Int cell, out StartingTileData tile)
+        {
+            tile = null;
+            return startingTiles != null && startingTiles.TryGetValue(cell, out tile) && tile != null;
+        }
+
+        public IEnumerable<Vector3Int> TileCells => templateTiles?.Keys ?? Enumerable.Empty<Vector3Int>();
+
+        public Dictionary<Vector3Int, GameplayTile> BuildGameplayTileView()
+        {
+            var view = new Dictionary<Vector3Int, GameplayTile>();
+            if (templateTiles == null)
+                return view;
+
+            foreach (var pair in templateTiles)
+            {
+                StartingTileData startingTile = null;
+                startingTiles?.TryGetValue(pair.Key, out startingTile);
+                view[pair.Key] = GameplayTile.FromTemplateAndRuntime(
+                    pair.Value,
+                    RuntimeTileData.FromStarting(startingTile));
+            }
+
+            return view;
+        }
+
+        public int TileCount => templateTiles?.Count ?? 0;
 
         private void NormalizeAirportData()
         {
@@ -166,22 +298,24 @@ namespace Models.Gameplay.Campaign
                     airportsByTile.Add(airport.Tile, airport);
             }
 
-            if (tileData != null)
+            if (startingTiles != null)
             {
-                foreach (var kvp in tileData)
+                foreach (var kvp in startingTiles)
                 {
-                    var tile = kvp.Value;
-                    if (tile?.infrastructure == null)
+                    var startingTile = kvp.Value;
+                    if (startingTile?.infrastructure == null)
                         continue;
 
-                    var legacyAirfieldLevel = tile.infrastructure.airfieldLevel;
+                    var legacyAirfieldLevel = startingTile.infrastructure.airfieldLevel;
                     if (legacyAirfieldLevel > 0 && !airportsByTile.ContainsKey(kvp.Key))
                     {
+                        TemplateTileData templateTile = null;
+                        templateTiles?.TryGetValue(kvp.Key, out templateTile);
                         var airport = new AirportDefinition
                         {
-                            Name = BuildDefaultAirportName(kvp.Key, tile.tileName),
+                            Name = BuildDefaultAirportName(kvp.Key, templateTile?.tileName),
                             Tile = kvp.Key,
-                            OwnerAlliance = tile.controllingAlliance,
+                            OwnerAlliance = startingTile.startingAlliance,
                             Level = Mathf.Clamp(legacyAirfieldLevel, 1, 10)
                         };
 
@@ -190,7 +324,7 @@ namespace Models.Gameplay.Campaign
                         airportsByTile[airport.Tile] = airport;
                     }
 
-                    tile.infrastructure.airfieldLevel = 0;
+                    startingTile.infrastructure.airfieldLevel = 0;
                 }
             }
 

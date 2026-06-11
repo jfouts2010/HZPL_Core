@@ -23,11 +23,15 @@ public class Vector3IntDictionaryConverter<TValue> : JsonConverter<Dictionary<Ve
     }
 }
 
-public class Vector3IntDictionaryConverter : Vector3IntDictionaryConverter<HZPLTileData>
+public class Vector3IntDictionaryConverter : Vector3IntDictionaryConverter<TemplateTileData>
 {
 }
 
-public class Vector3IntRuntimeTileOverlayDictionaryConverter : Vector3IntDictionaryConverter<TileRuntimeOverlay>
+public class Vector3IntStartingTileDictionaryConverter : Vector3IntDictionaryConverter<StartingTileData>
+{
+}
+
+public class Vector3IntRuntimeTileDataDictionaryConverter : Vector3IntDictionaryConverter<RuntimeTileData>
 {
 }
 
