@@ -180,66 +180,7 @@ public class AirDefenseComponentDefinition
     [JsonIgnore]
     public IReadOnlyDictionary<Guid, int> MissileInventoryByWeaponId =>
         LauncherCapability?.MissileInventoryByWeaponId ?? new Dictionary<Guid, int>();
-
-    public void EnsureInitialized()
-    {
-        if (ID == Guid.Empty)
-            ID = Guid.NewGuid();
-
-        ComponentName = ComponentName?.Trim() ?? string.Empty;
-        SpritePath = SpritePath?.Trim() ?? string.Empty;
-        HitPoints = Mathf.Max(0.1f, HitPoints);
-        ComponentSprite = string.IsNullOrWhiteSpace(SpritePath) ? null : Resources.Load<Sprite>(SpritePath);
-
-        if (SearchCapability != null)
-        {
-            SearchCapability.DetectionRangeKm = Mathf.Max(0f, SearchCapability.DetectionRangeKm);
-            SearchCapability.RadarQuality = Mathf.Max(0f, SearchCapability.RadarQuality);
-            SearchCapability.EmissionsStrength = Mathf.Max(0f, SearchCapability.EmissionsStrength);
-            SearchCapability.TrackCapacity = Mathf.Max(0, SearchCapability.TrackCapacity);
-        }
-
-        if (FireControlCapability != null)
-        {
-            FireControlCapability.DetectionRangeKm = Mathf.Max(0f, FireControlCapability.DetectionRangeKm);
-            FireControlCapability.EngagementRangeKm = Mathf.Max(0f, FireControlCapability.EngagementRangeKm);
-            FireControlCapability.RadarQuality = Mathf.Max(0f, FireControlCapability.RadarQuality);
-            FireControlCapability.EmissionsStrength = Mathf.Max(0f, FireControlCapability.EmissionsStrength);
-            FireControlCapability.GuidanceChannels = Mathf.Max(0, FireControlCapability.GuidanceChannels);
-        }
-
-        if (LauncherCapability != null)
-        {
-            LauncherCapability.LauncherCount = Mathf.Max(0, LauncherCapability.LauncherCount);
-            LauncherCapability.LaunchesPerSlice = Mathf.Max(0, LauncherCapability.LaunchesPerSlice);
-            LauncherCapability.EngagementRangeKm = Mathf.Max(0f, LauncherCapability.EngagementRangeKm);
-            LauncherCapability.OrganicGuidanceChannels = Mathf.Max(0, LauncherCapability.OrganicGuidanceChannels);
-            LauncherCapability.MissileInventoryByWeaponId ??= new Dictionary<Guid, int>();
-            LauncherCapability.MissileInventoryByWeaponId = LauncherCapability.MissileInventoryByWeaponId
-                .Where(pair => pair.Key != Guid.Empty && pair.Value > 0)
-                .ToDictionary(pair => pair.Key, pair => pair.Value);
-        }
-
-        if (CommandCapability != null)
-        {
-            CommandCapability.NetworkQualityBonus = Mathf.Max(0f, CommandCapability.NetworkQualityBonus);
-            CommandCapability.NetworkParticipationRangeKm = Mathf.Max(0f, CommandCapability.NetworkParticipationRangeKm);
-        }
-
-        if (PassiveSensorCapability != null)
-        {
-            PassiveSensorCapability.DetectionRangeKm = Mathf.Max(0f, PassiveSensorCapability.DetectionRangeKm);
-            PassiveSensorCapability.DetectionQuality = Mathf.Max(0f, PassiveSensorCapability.DetectionQuality);
-            PassiveSensorCapability.TrackCapacity = Mathf.Max(0, PassiveSensorCapability.TrackCapacity);
-        }
-
-        if (GunCapability != null)
-        {
-            GunCapability.EngagementRangeKm = Mathf.Max(0f, GunCapability.EngagementRangeKm);
-            GunCapability.GuidanceChannels = Mathf.Max(0, GunCapability.GuidanceChannels);
-            GunCapability.ShotsPerSlice = Mathf.Max(0, GunCapability.ShotsPerSlice);
-        }
-    }
+    
 }
 
 public enum AirDefenseComponentType

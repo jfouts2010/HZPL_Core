@@ -78,7 +78,6 @@ namespace Services
                     continue;
                 }
 
-                component.EnsureInitialized();
                 resolvedComponents.Add(new ResolvedAirDefenseComponentComposition(component, entry.Count));
                 roles |= component.NetworkRoles;
 

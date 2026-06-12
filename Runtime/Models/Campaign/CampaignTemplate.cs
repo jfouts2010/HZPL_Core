@@ -35,19 +35,7 @@ namespace Models.Gameplay.Campaign
         public List<AirWing> Wings = new List<AirWing>();
         public List<AirportDefinition> Airports = new List<AirportDefinition>();
         public List<StaticAirDefenseSiteDefinition> StaticAirDefenseSites = new List<StaticAirDefenseSiteDefinition>();
-        public List<AirWing> airWingSpawns
-        {
-            get
-            {
-                EnsureAirDataInitialized();
-                return Wings;
-            }
-            set
-            {
-                EnsureAirDataInitialized();
-                Wings = value ?? new List<AirWing>();
-            }
-        }
+        public List<AirWing> airWingSpawns = new List<AirWing>();
         public float TileSeparationKM = 50;
         public float TurnsPerDay = 4;
         public Vector2Int BottomLeftCorner;
@@ -97,26 +85,6 @@ namespace Models.Gameplay.Campaign
 
             areas = new List<Area>();
             unitSpawnPoints = new List<UnitSpawn>();
-            EnsureAirDataInitialized();
-            EnsureTemplateMetadataInitialized();
-        }
-
-        private void EnsureAirDataInitialized()
-        {
-            Wings ??= new List<AirWing>();
-            Airports ??= new List<AirportDefinition>();
-            StaticAirDefenseSites ??= new List<StaticAirDefenseSiteDefinition>();
-        }
-
-        private void EnsureTemplateMetadataInitialized()
-        {
-            ModuleId = string.IsNullOrWhiteSpace(ModuleId) ? DefaultModuleId : ModuleId.Trim();
-            if (CampaignStartTime == default)
-                CampaignStartTime = DefaultCampaignStartTime;
-
-            SimulationSettings ??= new SimulationSettings();
-            SimulationSettings.Normalize();
-            ContentHash ??= string.Empty;
         }
 
         public Color GetAreaColor(Guid id)
@@ -130,19 +98,6 @@ namespace Models.Gameplay.Campaign
             {
                 return Color.red;
             }
-        }
-
-        [OnDeserialized]
-        private void OnDeserialized(StreamingContext context)
-        {
-            EnsureAirDataInitialized();
-            EnsureTemplateMetadataInitialized();
-            Countries ??= new List<Guid>();
-            CountryAlliance ??= new Dictionary<Guid, Alliance>();
-            divisionTemplates ??= new List<DivisionTemplate>();
-            areas ??= new List<Area>();
-            unitSpawnPoints ??= new List<UnitSpawn>();
-            EnsureTileCornersInitialized();
         }
 
         /// <summary>
