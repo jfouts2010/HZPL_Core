@@ -91,36 +91,36 @@ namespace Models.Module
         {
             var infrastructure = new TileInfrastructure
             {
-                infrastructureLevel = alliance == Alliance.Neutral ? 2 : 4,
-                supplyLineLevel = alliance == Alliance.Neutral ? 1 : 3
+                roads = InfrastructureProperty.WithBuildLevel(alliance == Alliance.Neutral ? 2 : 4),
+                supplyLine = InfrastructureProperty.WithBuildLevel(alliance == Alliance.Neutral ? 1 : 3)
             };
 
             if (cell == new Vector3Int(-3, 0, 0))
             {
                 infrastructure.cityType = CityType.Suburb;
                 infrastructure.isSupplyHub = true;
-                infrastructure.factoryLevel = 2;
-                infrastructure.electricityLevel = 2;
-                infrastructure.supplyLineLevel = 5;
+                infrastructure.factory = InfrastructureProperty.WithBuildLevel(2);
+                infrastructure.electricity = InfrastructureProperty.WithBuildLevel(2);
+                infrastructure.supplyLine = InfrastructureProperty.WithBuildLevel(5);
             }
             else if (cell == new Vector3Int(3, 0, 0))
             {
                 infrastructure.cityType = CityType.Suburb;
                 infrastructure.isSupplyHub = true;
-                infrastructure.factoryLevel = 2;
-                infrastructure.oilLevel = 1;
-                infrastructure.supplyLineLevel = 5;
+                infrastructure.factory = InfrastructureProperty.WithBuildLevel(2);
+                infrastructure.oil = InfrastructureProperty.WithBuildLevel(1);
+                infrastructure.supplyLine = InfrastructureProperty.WithBuildLevel(5);
             }
             else if (cell == new Vector3Int(1, 0, 0))
             {
-                infrastructure.factoryLevel = 4;
-                infrastructure.steelLevel = 2;
-                infrastructure.infrastructureLevel = 5;
+                infrastructure.factory = InfrastructureProperty.WithBuildLevel(4);
+                infrastructure.steel = InfrastructureProperty.WithBuildLevel(2);
+                infrastructure.roads = InfrastructureProperty.WithBuildLevel(5);
             }
             else if (cell == new Vector3Int(-1, 0, 0))
             {
-                infrastructure.fortificationLevel = 2;
-                infrastructure.supplyLineLevel = 4;
+                infrastructure.fortification = InfrastructureProperty.WithBuildLevel(2);
+                infrastructure.supplyLine = InfrastructureProperty.WithBuildLevel(4);
             }
 
             return infrastructure;
@@ -224,7 +224,7 @@ namespace Models.Module
                     Name = "Blue Test Airbase",
                     Tile = new Vector3Int(-3, 0, 0),
                     OwnerAlliance = Alliance.BlueFor,
-                    Level = 6
+                    BuildLevel = 6
                 },
                 new AirportDefinition
                 {
@@ -232,7 +232,7 @@ namespace Models.Module
                     Name = "Red Test Airbase",
                     Tile = new Vector3Int(3, 0, 0),
                     OwnerAlliance = Alliance.RedFor,
-                    Level = 6
+                    BuildLevel = 6
                 }
             };
         }

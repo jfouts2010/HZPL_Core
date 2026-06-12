@@ -14,176 +14,146 @@ namespace Models.Gameplay.Campaign
     }
     
     /// <summary>
-    /// Types of buildings that can be constructed
-    /// </summary>
-    public enum BuildingType
-    {
-        Fortification,
-        Port,
-        Airfield
-    }
-    
-    /// <summary>
-    /// Types of resources that can be produced
-    /// </summary>
-    public enum ResourceType
-    {
-        Oil,
-        Electricity,
-        Steel,
-        Factory
-    }
-    
-    /// <summary>
     /// Infrastructure data for a single tile
     /// </summary>
     [Serializable]
     public class TileInfrastructure
     {
-        // City
         public CityType cityType = CityType.None;
         
-        // Infrastructure Level (roads, highways, etc.)
-        public int infrastructureLevel = 0; // 0-10 (0 = none, 1 = dirt roads, 10 = highways)
+        public InfrastructureProperty roads;
+        public InfrastructureProperty supplyLine;
         
-        // Supply System
-        public bool isSupplyHub = false; // Is this a supply hub/depot?
-        public int supplyLineLevel = 0;  // 0-10 (0 = none, 1-10 = supply line strength)
+        public bool isSupplyHub = false;
         
-        // Buildings (level 0 = not present, 1-10 = level)
-        public int fortificationLevel = 0;
-        public int portLevel = 0;
-        // Legacy tile-authored airfield data retained only so older CampaignTemplate files can migrate to AirportDefinition.
-        public int airfieldLevel = 0;
+        public InfrastructureProperty fortification;
+        public InfrastructureProperty port;
         
-        // Resources (level 0 = not present, 1-10 = level)
-        public int oilLevel = 0;
-        public int electricityLevel = 0;
-        public int steelLevel = 0;
-        public int factoryLevel = 0;
+        public InfrastructureProperty oil;
+        public InfrastructureProperty electricity;
+        public InfrastructureProperty steel;
+        public InfrastructureProperty factory;
         
-        public TileInfrastructure()
-        {
-        }
-        
-        /// <summary>
-        /// Check if this tile has any infrastructure
-        /// </summary>
-        public bool HasAnyInfrastructure()
+        public bool HasAnyBuiltInfrastructure()
         {
             return cityType != CityType.None ||
-                   infrastructureLevel > 0 ||
                    isSupplyHub ||
-                   supplyLineLevel > 0 ||
-                   fortificationLevel > 0 ||
-                   portLevel > 0 ||
-                   oilLevel > 0 ||
-                   electricityLevel > 0 ||
-                   steelLevel > 0 ||
-                   factoryLevel > 0;
+                   roads.HasBuiltCapacity ||
+                   supplyLine.HasBuiltCapacity ||
+                   fortification.HasBuiltCapacity ||
+                   port.HasBuiltCapacity ||
+                   oil.HasBuiltCapacity ||
+                   electricity.HasBuiltCapacity ||
+                   steel.HasBuiltCapacity ||
+                   factory.HasBuiltCapacity;
         }
-        
-        /// <summary>
-        /// Get infrastructure level description
-        /// </summary>
-        public string GetInfrastructureLevelDescription()
+
+        public bool TryGetComponentProperty(string componentKey, out InfrastructureProperty property)
         {
-            if (infrastructureLevel == 0) return "None";
-            if (infrastructureLevel <= 2) return "Dirt Roads";
-            if (infrastructureLevel <= 4) return "Basic Roads";
-            if (infrastructureLevel <= 6) return "Paved Roads";
-            if (infrastructureLevel <= 8) return "Modern Roads";
-            return "Highway Network";
-        }
-        
-        /// <summary>
-        /// Get supply line level description
-        /// </summary>
-        public string GetSupplyLineLevelDescription()
-        {
-            if (supplyLineLevel == 0) return "No Supply Line";
-            if (supplyLineLevel <= 3) return "Weak Supply";
-            if (supplyLineLevel <= 6) return "Moderate Supply";
-            if (supplyLineLevel <= 8) return "Strong Supply";
-            return "Maximum Supply";
-        }
-        
-        /// <summary>
-        /// Get building level by type
-        /// </summary>
-        public int GetBuildingLevel(BuildingType type)
-        {
-            switch (type)
+            property = default;
+            if (string.IsNullOrWhiteSpace(componentKey))
+                return false;
+
+            switch (componentKey)
             {
-                case BuildingType.Fortification: return fortificationLevel;
-                case BuildingType.Port: return portLevel;
-                case BuildingType.Airfield: return 0;
-                default: return 0;
+                case "Factory":
+                    property = factory;
+                    return true;
+                case "Oil":
+                    property = oil;
+                    return true;
+                case "Electricity":
+                    property = electricity;
+                    return true;
+                case "Steel":
+                    property = steel;
+                    return true;
+                case "SupplyLine":
+                    property = supplyLine;
+                    return true;
+                case "Infrastructure":
+                    property = roads;
+                    return true;
+                case "Port":
+                    property = port;
+                    return true;
+                case "Fortification":
+                    property = fortification;
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        public int GetComponentFunctionalLevel(string componentKey)
+        {
+            if (componentKey == "SupplyHub")
+                return isSupplyHub ? 5 : 0;
+
+            return TryGetComponentProperty(componentKey, out var property)
+                ? property.FunctionalLevel
+                : 0;
+        }
+
+        public bool ApplyComponentDamage(string componentKey, int amount)
+        {
+            if (amount <= 0 || string.IsNullOrWhiteSpace(componentKey))
+                return false;
+
+            if (componentKey == "SupplyHub")
+                return false;
+
+            if (!TryGetComponentProperty(componentKey, out var property))
+            {
+                property = roads;
+            }
+
+            property.ApplyDamage(amount);
+
+            switch (componentKey)
+            {
+                case "Factory":
+                    factory = property;
+                    return true;
+                case "Oil":
+                    oil = property;
+                    return true;
+                case "Electricity":
+                    electricity = property;
+                    return true;
+                case "Steel":
+                    steel = property;
+                    return true;
+                case "SupplyLine":
+                    supplyLine = property;
+                    return true;
+                case "Infrastructure":
+                    roads = property;
+                    return true;
+                case "Port":
+                    port = property;
+                    return true;
+                case "Fortification":
+                    fortification = property;
+                    return true;
+                default:
+                    roads = property;
+                    return true;
             }
         }
         
-        /// <summary>
-        /// Set building level by type
-        /// </summary>
-        public void SetBuildingLevel(BuildingType type, int level)
-        {
-            level = Mathf.Clamp(level, 0, 10);
-            
-            switch (type)
-            {
-                case BuildingType.Fortification: fortificationLevel = level; break;
-                case BuildingType.Port: portLevel = level; break;
-                case BuildingType.Airfield: airfieldLevel = 0; break;
-            }
-        }
-        
-        /// <summary>
-        /// Get resource level by type
-        /// </summary>
-        public int GetResourceLevel(ResourceType type)
-        {
-            switch (type)
-            {
-                case ResourceType.Oil: return oilLevel;
-                case ResourceType.Electricity: return electricityLevel;
-                case ResourceType.Steel: return steelLevel;
-                case ResourceType.Factory: return factoryLevel;
-                default: return 0;
-            }
-        }
-        
-        /// <summary>
-        /// Set resource level by type
-        /// </summary>
-        public void SetResourceLevel(ResourceType type, int level)
-        {
-            level = Mathf.Clamp(level, 0, 10);
-            
-            switch (type)
-            {
-                case ResourceType.Oil: oilLevel = level; break;
-                case ResourceType.Electricity: electricityLevel = level; break;
-                case ResourceType.Steel: steelLevel = level; break;
-                case ResourceType.Factory: factoryLevel = level; break;
-            }
-        }
-        
-        /// <summary>
-        /// Clear all infrastructure
-        /// </summary>
         public void Clear()
         {
             cityType = CityType.None;
-            infrastructureLevel = 0;
+            roads.Clear();
             isSupplyHub = false;
-            supplyLineLevel = 0;
-            fortificationLevel = 0;
-            portLevel = 0;
-            airfieldLevel = 0;
-            oilLevel = 0;
-            electricityLevel = 0;
-            steelLevel = 0;
-            factoryLevel = 0;
+            supplyLine.Clear();
+            fortification.Clear();
+            port.Clear();
+            oil.Clear();
+            electricity.Clear();
+            steel.Clear();
+            factory.Clear();
         }
     }
 }

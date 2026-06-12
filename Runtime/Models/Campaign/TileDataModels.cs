@@ -145,16 +145,15 @@ namespace Models.Gameplay.Campaign
             return new TileInfrastructure
             {
                 cityType = source.cityType,
-                infrastructureLevel = source.infrastructureLevel,
+                roads = source.roads,
                 isSupplyHub = source.isSupplyHub,
-                supplyLineLevel = source.supplyLineLevel,
-                fortificationLevel = source.fortificationLevel,
-                portLevel = source.portLevel,
-                airfieldLevel = source.airfieldLevel,
-                oilLevel = source.oilLevel,
-                electricityLevel = source.electricityLevel,
-                steelLevel = source.steelLevel,
-                factoryLevel = source.factoryLevel
+                supplyLine = source.supplyLine,
+                fortification = source.fortification,
+                port = source.port,
+                oil = source.oil,
+                electricity = source.electricity,
+                steel = source.steel,
+                factory = source.factory
             };
         }
     }

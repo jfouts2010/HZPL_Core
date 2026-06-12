@@ -10,6 +10,6 @@ namespace Models.Gameplay.Campaign
         public string Name;
         public Vector3Int Tile;
         public Alliance OwnerAlliance;
-        public int Level = 1;
+        public int BuildLevel = 1;
     }
 }

@@ -116,6 +116,14 @@ namespace Models.Gameplay.Campaign
             update(tile.infrastructure);
         }
 
+        public void ApplyInfrastructureDamage(Vector3Int cell, string componentKey, int damageAmount)
+        {
+            if (damageAmount <= 0)
+                return;
+
+            UpdateInfrastructure(cell, infrastructure => infrastructure.ApplyComponentDamage(componentKey, damageAmount));
+        }
+
         public Dictionary<Vector3Int, RuntimeTileData> ToRuntimeTileData()
         {
             var result = new Dictionary<Vector3Int, RuntimeTileData>();

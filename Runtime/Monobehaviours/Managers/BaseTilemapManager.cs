@@ -103,7 +103,7 @@ public class BaseTilemapManager : MonoBehaviour
         {
             supplyTilemap.SetTile(cellPos, supplyNodeTile);
         }
-        else if (data.infrastructure.supplyLineLevel > 0)
+        else if (data.infrastructure.supplyLine.buildLevel > 0)
         {
             supplyTilemap.SetTile(cellPos, supplyLineTile);
         }
@@ -127,15 +127,15 @@ public class BaseTilemapManager : MonoBehaviour
 
         airportTilemap.SetTile(cellPos, AirportCells.Contains(cellPos) ? airportTile : null);
 
-        fortTilemap.SetTile(cellPos, data.infrastructure.fortificationLevel > 0 ? fortTile : null);
+        fortTilemap.SetTile(cellPos, data.infrastructure.fortification.buildLevel > 0 ? fortTile : null);
 
-        electricityTilemap.SetTile(cellPos, data.infrastructure.electricityLevel > 0 ? electricityTile : null);
+        electricityTilemap.SetTile(cellPos, data.infrastructure.electricity.buildLevel > 0 ? electricityTile : null);
 
-        oilTilemap.SetTile(cellPos, data.infrastructure.oilLevel > 0 ? oilTile : null);
+        oilTilemap.SetTile(cellPos, data.infrastructure.oil.buildLevel > 0 ? oilTile : null);
 
-        factoryTilemap.SetTile(cellPos, data.infrastructure.factoryLevel > 0 ? factoryTile : null);
+        factoryTilemap.SetTile(cellPos, data.infrastructure.factory.buildLevel > 0 ? factoryTile : null);
 
-        steelTilemap.SetTile(cellPos, data.infrastructure.steelLevel > 0 ? steelTile : null);
+        steelTilemap.SetTile(cellPos, data.infrastructure.steel.buildLevel > 0 ? steelTile : null);
 
         landmassTilemap.SetTileFlags(cellPos, TileFlags.None);
 
